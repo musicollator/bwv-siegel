@@ -210,6 +210,12 @@ class BwvSiegel extends HTMLElement {
     const goldAzimuth = (90 + 180) % 360;
     this.goldPath = new GeodesicPath(goldAzimuth, Math.PI);
     this.goldPath.initialize();
+
+    // Add resize listener
+    this.resizeObserver = new ResizeObserver(() => {
+      this.handleResize();
+    });
+    this.resizeObserver.observe(container);
   }
 
   // Gaussian probability for azimuth deviation (for smooth selection weighting)
@@ -333,7 +339,7 @@ class BwvSiegel extends HTMLElement {
       throw error; // Re-throw to surface the problem
     }
   }
-  
+
   moveAlongGeodesic() {
     // Check if near point C for potential freeze and azimuth change
     if (this.bluePath.isNearC(0.005)) {
@@ -488,8 +494,40 @@ class BwvSiegel extends HTMLElement {
     if (this.rightSeal) this.rightSeal.style.display = 'none';
   }
 
+  handleResize() {
+    if (!this.renderer || !this.camera || !this.isLoaded) return;
+
+    const container = this.shadowRoot.querySelector('.siegel-container');
+    if (!container) return;
+
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    // Update camera aspect ratio
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+
+    // Update renderer size
+    this.renderer.setSize(width, height);
+
+    // Re-render if not currently animating
+    if (!this.isRunning) {
+      this.renderer.render(this.scene, this.camera);
+    }
+  }
+
+  // Add this method to handle component removal from DOM
+  disconnectedCallback() {
+    // Cleanup when component is removed from DOM
+    this.stop();
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+  }
+
   // Legacy compatibility for demo
-  reset() { this.stop(); this.start(); }
+  reset() { this.stop(); }
 
   setQuantization(newQ) {
     this.quantization = newQ;
