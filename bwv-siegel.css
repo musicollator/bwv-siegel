@@ -1,0 +1,35 @@
+/* BWV Siegel Web Component Styles */
+
+:host {
+  display: block;
+  width: 100%;
+  height: 400px;
+  position: relative;
+  --siegel-radius: {{RADIUS}}px;
+}
+
+.siegel-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: white;
+}
+
+.seal {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  display: none;
+  transform: translate(-50%, -50%);
+  transition: none;
+}
+
+.seal.active {
+  display: block;
+}
+
+.seal svg {
+  width: 100%;
+  height: 100%;
+}

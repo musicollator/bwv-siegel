@@ -1,4 +1,3 @@
-
 {
   "name": "bwv-siegel",
   "version": "1.0.0",
@@ -13,16 +12,21 @@
   },
   "files": [
     "bwv-siegel.js",
+    "bwv-siegel.html",
+    "bwv-siegel.css",
+    "assets/",
     "demo.html",
     "test/",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "test": "node test/angle-calculator.test.js",
-    "demo": "python -m http.server 8080",
+    "demo": "python -m http.server 8080 || python3 -m http.server 8080",
     "build": "echo 'No build step needed - pure Web Component'",
     "lint": "echo 'Add ESLint if needed'",
-    "dev": "python -m http.server 8080"
+    "dev": "python -m http.server 8080 || python3 -m http.server 8080",
+    "serve": "python -m http.server 8080 || python3 -m http.server 8080"
   },
   "keywords": [
     "bach",
@@ -34,7 +38,7 @@
     "light-refraction",
     "custom-element"
   ],
-  "author": "Christophe Thiebaud",
+  "author": "Your Name",
   "license": "MIT",
   "repository": {
     "type": "git",

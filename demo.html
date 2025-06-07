@@ -74,21 +74,21 @@
     <!-- Basic Usage -->
     <div class="demo-section">
         <h2>Basic Usage</h2>
-        <p>Simple drop-in component with default settings:</p>
+        <p>Simple drop-in component - clean and focused:</p>
         <bwv-siegel quantization="8"></bwv-siegel>
     </div>
 
     <!-- Auto-start Example -->
     <div class="demo-section">
-        <h2>Auto-start with Custom Quantization</h2>
-        <p>Automatically starts animation with Q=6:</p>
+        <h2>Auto-start Animation</h2>
+        <p>Component starts automatically, no controls needed:</p>
         <bwv-siegel quantization="6" auto-start></bwv-siegel>
     </div>
 
-    <!-- External Controls Example -->
+    <!-- External API Control -->
     <div class="demo-section">
         <h2>External API Control</h2>
-        <p>Control the animation from JavaScript:</p>
+        <p>Control the animation via JavaScript API (no built-in controls):</p>
         
         <div class="controls-external">
             <button onclick="externalStart()">▶️ Start</button>
@@ -130,6 +130,9 @@
         <pre><code>// Create programmatically
 const siegel = document.createElement('bwv-siegel');
 siegel.setAttribute('quantization', '8');
+siegel.setAttribute('template-path', 'bwv-siegel.html');
+siegel.setAttribute('styles-path', 'bwv-siegel.css');
+siegel.setAttribute('svg-path', 'assets/siegel.svg');
 siegel.addEventListener('siegel-started', (e) => {
     console.log('Started with Q=', e.detail.quantization);
 });
@@ -144,6 +147,9 @@ siegel.start();</code></pre>
         &lt;bwv-siegel 
             ref={siegelRef}
             quantization="8"
+            template-path="bwv-siegel.html"
+            styles-path="bwv-siegel.css"
+            svg-path="assets/siegel.svg"
             onSiegel-started={(e) => console.log('Started!')}
         /&gt;
     );
@@ -153,6 +159,9 @@ siegel.start();</code></pre>
         <pre><code>&lt;template&gt;
     &lt;bwv-siegel 
         :quantization="q" 
+        template-path="bwv-siegel.html"
+        styles-path="bwv-siegel.css"
+        svg-path="assets/siegel.svg"
         @siegel-started="onStarted"
         @quantization-changed="onQChanged"
     /&gt;

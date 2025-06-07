@@ -2,20 +2,28 @@
 
 **Bach Siegel Animation Web Component with Quantized Light-Refraction Physics**
 
-A self-contained Web Component that creates beautiful Bach Siegel seal animations following light-refraction physics principles with customizable quantization levels.
+A modular Web Component that creates beautiful Bach Siegel seal animations following light-refraction physics principles with customizable quantization levels.
+
+> **📋 Requirements**: This component requires external files to be available in your project:
+> - `bwv-siegel.html` - Component template
+> - `bwv-siegel.css` - Component styles  
+> - `assets/siegel.svg` - SVG symbols (single source of truth)
+>
+> All files are loaded dynamically and follow proper separation of concerns.
 
 ## ✨ Features
 
-- **🎯 Pure Web Component** - Works with any framework or vanilla HTML
-- **🎪 Self-contained** - Single file with embedded SVG, CSS, and JavaScript
-- **⚙️ Configurable** - Adjustable quantization levels and physics parameters
+- **🎯 Clean & Focused** - Pure animation component without built-in controls  
+- **🏗️ Modular Architecture** - Separation of logic (JS), template (HTML), styles (CSS), and assets (SVG)
+- **🎪 External File Loading** - No embedded content, all files loaded dynamically
+- **⚙️ API Controlled** - Programmatic control via methods and events
 - **🎨 Beautiful** - High-quality SVG animations with blue (JSB) and gold (BJS) seals
 - **📱 Responsive** - Works on desktop and mobile devices
 - **🔧 Framework Agnostic** - React, Vue, Angular, Svelte, or vanilla JavaScript
 
 ## 🚀 Quick Start
 
-### CDN Usage (Easiest)
+### CDN Usage (Requires All Files)
 
 ```html
 <!DOCTYPE html>
@@ -33,15 +41,29 @@ A self-contained Web Component that creates beautiful Bach Siegel seal animation
 </html>
 ```
 
+**⚠️ Important**: The component will automatically load:
+- `bwv-siegel.html` (template)
+- `bwv-siegel.css` (styles)  
+- `assets/siegel.svg` (graphics)
+
+Make sure these files are available in your project or specify custom paths using component attributes.
+
 ### NPM Installation
 
 ```bash
 npm install bwv-siegel
 ```
 
+**Copy Required Files:**
+```bash
+# Copy component files to your public directory
+cp node_modules/bwv-siegel/bwv-siegel.* ./public/
+cp -r node_modules/bwv-siegel/assets ./public/
+```
+
 ```javascript
-// Import the component
-import 'bwv-siegel';
+// Import and use in your application
+import 'bwv-siegel/bwv-siegel.js';
 
 // Use in your HTML
 // <bwv-siegel quantization="12"></bwv-siegel>
@@ -57,20 +79,70 @@ python -m http.server 8080
 # Open http://localhost:8080/demo.html
 ```
 
+## 📁 Project Structure
+
+```
+bwv-siegel/
+├── LICENSE                      # MIT License
+├── README.md                    # Documentation  
+├── assets/
+│   └── siegel.svg              # Original SVG symbols (single source of truth)
+├── bwv-siegel.js               # Component logic (loads external files)
+├── bwv-siegel.html             # Component template (HTML structure)
+├── bwv-siegel.css              # Component styles (CSS styling)
+├── demo.html                   # Comprehensive examples
+├── package.json                # NPM configuration
+└── test/
+    └── angle-calculator.test.js # Unit tests
+```
+
+**🎯 Separation of Concerns:**
+- **Logic** (`bwv-siegel.js`) - Component behavior, physics calculations, and API
+- **Template** (`bwv-siegel.html`) - Minimal HTML structure (just the seals)
+- **Styles** (`bwv-siegel.css`) - CSS styling and animations
+- **Assets** (`assets/siegel.svg`) - Vector graphics and symbols
+
+The core template contains only the essential animation elements - no controls or UI chrome.
+
+## 🎨 Design Philosophy
+
+The BWV Siegel component follows a **clean, focused design**:
+
+- **No built-in controls** - The component focuses purely on animation
+- **API-driven** - Control via JavaScript methods: `start()`, `stop()`, `setQuantization()`  
+- **Event-based** - Listen to `siegel-started`, `siegel-stopped`, etc.
+- **Composable** - You build the UI controls that fit your app's design
+- **Separation of concerns** - Animation logic is separate from UI controls
+
+**Why no built-in controls?**
+- Different apps need different control styles
+- Controls would impose design opinions on your app
+- Cleaner component API and smaller file size
+- More reusable across different use cases
+
 ## 📖 Usage
 
 ### Basic HTML
 
 ```html
-<!-- Simple usage -->
-<bwv-siegel></bwv-siegel>
+<!-- Clean component - just the animation -->
+<bwv-siegel quantization="8" auto-start></bwv-siegel>
 
 <!-- With configuration -->
 <bwv-siegel 
     quantization="12" 
     radius="150" 
-    auto-start>
+    template-path="./templates/siegel.html"
+    styles-path="./styles/siegel.css"
+    svg-path="./assets/siegel.svg">
 </bwv-siegel>
+
+<!-- Control via JavaScript API -->
+<script>
+  const siegel = document.querySelector('bwv-siegel');
+  siegel.start();
+  siegel.setQuantization(16);
+</script>
 ```
 
 ### JavaScript API
@@ -207,6 +279,9 @@ export class AppComponent {
 |-----------|------|---------|-------------|
 | `quantization` | number | `8` | Number of discrete angle steps (2-24) |
 | `radius` | number | `120` | Animation radius in pixels |
+| `template-path` | string | `"bwv-siegel.html"` | Path to the HTML template file |
+| `styles-path` | string | `"bwv-siegel.css"` | Path to the CSS styles file |
+| `svg-path` | string | `"assets/siegel.svg"` | Path to the siegel.svg file |
 | `auto-start` | boolean | `false` | Start animation automatically |
 
 ### Methods
@@ -253,7 +328,7 @@ The animation follows **light-refraction physics** principles:
 # Run unit tests
 npm test
 
-# Test specific quantization
+# Test specific functionality
 node test/angle-calculator.test.js
 ```
 
@@ -272,11 +347,14 @@ bwv-siegel {
 ## 🌟 Examples
 
 Check out `demo.html` for comprehensive examples including:
-- Basic usage
-- External API control  
+- Clean component usage without built-in controls
+- External API control examples
 - Multiple instances
 - Framework integration
 - Event handling
+- Custom control implementations
+
+The examples show how to build your own controls using the component's API.
 
 ## 📦 Browser Support
 
