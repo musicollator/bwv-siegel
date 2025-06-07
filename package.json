@@ -14,6 +14,7 @@
     "bwv-siegel.js",
     "bwv-siegel.html",
     "bwv-siegel.css",
+    "src/",
     "assets/",
     "demo.html",
     "test/",
@@ -21,7 +22,10 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node test/angle-calculator.test.js",
+    "test": "node test/angle-calculator.test.js && node test/angle-calculator-enhanced.test.js",
+    "test:basic": "node test/angle-calculator.test.js",
+    "test:enhanced": "node test/angle-calculator-enhanced.test.js",
+    "test:watch": "nodemon --watch src --watch test -e js --exec 'npm test'",
     "demo": "python -m http.server 8080 || python3 -m http.server 8080",
     "build": "echo 'No build step needed - pure Web Component'",
     "lint": "echo 'Add ESLint if needed'",
@@ -36,7 +40,10 @@
     "quantization",
     "physics",
     "light-refraction",
-    "custom-element"
+    "custom-element",
+    "geodesic",
+    "probability",
+    "gaussian"
   ],
   "author": "Your Name",
   "license": "MIT",
@@ -56,6 +63,7 @@
     "supports es6-module"
   ],
   "devDependencies": {
-    "assert": "^2.0.0"
+    "assert": "^2.0.0",
+    "nodemon": "^3.0.0"
   }
 }
