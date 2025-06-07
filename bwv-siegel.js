@@ -25,7 +25,7 @@ class GeodesicPath {
     const azimuthRad = (this.azimuthFromC * Math.PI) / 180;
     const directionX = Math.sin(azimuthRad);
     const directionY = -Math.cos(azimuthRad);
-    
+
     const x = Math.sin(this.angularDistance) * directionX;
     const y = Math.sin(this.angularDistance) * directionY;
     const z = Math.cos(this.angularDistance);
@@ -86,7 +86,7 @@ class BwvSiegel extends HTMLElement {
     this.angularSpeed = 0.02;
     this.quantization = 8;
     this.lastAzimuthChange = 0;
-    
+
     // Freeze at point C feature
     this.freezeAtC = false;
     this.freezeStartTime = 0;
@@ -105,9 +105,22 @@ class BwvSiegel extends HTMLElement {
     try {
       this.shadowRoot.innerHTML = '<div style="padding: 20px; text-align: center;">🎼 Loading Dual Seal BWV Siegel...</div>';
 
+      // Get the base URL from where this module was loaded
+      const moduleUrl = new URL(import.meta.url);
+      const baseUrl = moduleUrl.href.substring(0, moduleUrl.href.lastIndexOf('/') + 1);
+
+      // Construct full URLs for template and styles if they are relative paths
+      const templateUrl = this.templatePath.startsWith('http')
+        ? this.templatePath
+        : baseUrl + this.templatePath;
+
+      const stylesUrl = this.stylesPath.startsWith('http')
+        ? this.stylesPath
+        : baseUrl + this.stylesPath;
+
       const [htmlResponse, cssResponse] = await Promise.all([
-        fetch(this.templatePath),
-        fetch(this.stylesPath)
+        fetch(templateUrl),
+        fetch(stylesUrl)
       ]);
 
       if (!htmlResponse.ok || !cssResponse.ok) {
@@ -189,7 +202,7 @@ class BwvSiegel extends HTMLElement {
     // Initialize paths
     this.bluePath = new GeodesicPath(90, Math.PI);
     this.bluePath.initialize();
-    
+
     const goldAzimuth = (90 + 180) % 360;
     this.goldPath = new GeodesicPath(goldAzimuth, Math.PI);
     this.goldPath.initialize();
