@@ -69,7 +69,7 @@ class BwvSiegel extends HTMLElement {
 
     // NEW: Initialize freeze duration from attribute
     this.freezeDuration = parseInt(this.getAttribute('freeze-duration')) || 800;
-    
+
     // 3D Animation state
     this.isRunning = false;
     this.scene = null;
@@ -89,6 +89,8 @@ class BwvSiegel extends HTMLElement {
     this.angularSpeed = 0.02;
     this.quantization = 8;
     this.lastAzimuthChange = 0;
+
+    this.lastChangeAngularDistance = 0;  // Track angular distance when last direction change occurred
 
     // Freeze at point C feature
     this.freezeAtC = false;
@@ -292,64 +294,77 @@ class BwvSiegel extends HTMLElement {
     return weightedAngles[0].azimuth;
   }
 
+  performAzimuthChange() {
+    const currentBlueAzimuth = this.bluePath.azimuthFromC;
+    const currentGoldAzimuth = this.goldPath.azimuthFromC;
+
+    try {
+      // STEP 1: Blue seal selects first (single argument)
+      const newBlueAzimuth = this.angleCalculator.getNextAzimuth(currentBlueAzimuth);
+
+      // STEP 2: Gold seal selects with complex probability (dual argument)
+      const newGoldAzimuth = this.angleCalculator.getNextAzimuth(currentGoldAzimuth, newBlueAzimuth);
+
+      // Update both paths
+      this.bluePath.azimuthFromC = newBlueAzimuth;
+      this.bluePath.angularDistance = 0.01;
+
+      this.goldPath.azimuthFromC = newGoldAzimuth;
+      this.goldPath.angularDistance = 0.01;
+
+      // Track when and where direction change occurred
+      this.lastAzimuthChange = Date.now();
+      this.lastChangeAngularDistance = this.bluePath.angularDistance;
+
+      console.log(`🔄 Azimuth change: Blue=${newBlueAzimuth}°, Gold=${newGoldAzimuth}°`);
+
+    } catch (error) {
+      console.error('🚨 AngleCalculator failed:', error.message);
+      console.error('🔧 Animation parameters:', {
+        quantization: this.quantization,
+        currentBlueAzimuth,
+        currentGoldAzimuth,
+        blueAngularDistance: this.bluePath.angularDistance,
+        goldAngularDistance: this.goldPath.angularDistance
+      });
+
+      // Stop animation to prevent further errors
+      this.stop();
+      throw error; // Re-throw to surface the problem
+    }
+  }
+  
   moveAlongGeodesic() {
     // Check if near point C for potential freeze and azimuth change
-    if (this.bluePath.isNearC(0.005)) {  // Your improved tolerance!
-      const timeSinceLastChange = Date.now() - this.lastAzimuthChange;
+    if (this.bluePath.isNearC(0.005)) {
 
-      // Start freeze if not already frozen and enough time has passed
-      if (!this.freezeAtC && timeSinceLastChange > 1000) {
-        this.freezeAtC = true;
-        this.freezeStartTime = Date.now();
-        console.log('❄️ Seals frozen at point C - brief pause!');
-        return; // Don't move during first freeze frame
+      // Calculate how far seals have traveled since last direction change
+      const distanceSinceLastChange = Math.abs(this.bluePath.angularDistance - this.lastChangeAngularDistance);
+      const minTravelDistance = Math.PI / 4; // Must travel at least 45 degrees (π/4 radians) before next change
+
+      // Start freeze if not already frozen and seals have traveled enough distance
+      if (!this.freezeAtC && distanceSinceLastChange > minTravelDistance) {
+
+        if (this.freezeDuration === 0) {
+          // Instant direction change when freeze-duration is 0
+          this.performAzimuthChange();
+        } else {
+          // Start freeze for freeze-duration > 0
+          this.freezeAtC = true;
+          this.freezeStartTime = Date.now();
+          console.log('❄️ Seals frozen at point C - brief pause!');
+          return; // Don't move during first freeze frame
+        }
       }
 
       // Check if freeze duration has elapsed
       if (this.freezeAtC) {
         const freezeElapsed = Date.now() - this.freezeStartTime;
 
-        // In moveAlongGeodesic(), wrap azimuth selection in try-catch:
-
         if (freezeElapsed >= this.freezeDuration) {
-          // End freeze and select new azimuths using AngleCalculator
+          // End freeze and change direction
           this.freezeAtC = false;
-
-          const currentBlueAzimuth = this.bluePath.azimuthFromC;
-          const currentGoldAzimuth = this.goldPath.azimuthFromC;
-
-          try {
-            // STEP 1: Blue seal selects first (single argument)
-            const newBlueAzimuth = this.angleCalculator.getNextAzimuth(currentBlueAzimuth);
-
-            // STEP 2: Gold seal selects with complex probability (dual argument)
-            const newGoldAzimuth = this.angleCalculator.getNextAzimuth(currentGoldAzimuth, newBlueAzimuth);
-
-            // Update both paths
-            this.bluePath.azimuthFromC = newBlueAzimuth;
-            this.bluePath.angularDistance = 0.01;
-
-            this.goldPath.azimuthFromC = newGoldAzimuth;
-            this.goldPath.angularDistance = 0.01;
-
-            this.lastAzimuthChange = Date.now();
-
-            console.log(`🔄 Azimuth change: Blue=${newBlueAzimuth}°, Gold=${newGoldAzimuth}°`);
-
-          } catch (error) {
-            console.error('🚨 AngleCalculator failed:', error.message);
-            console.error('🔧 Animation parameters:', {
-              quantization: this.quantization,
-              currentBlueAzimuth,
-              currentGoldAzimuth,
-              blueAngularDistance: this.bluePath.angularDistance,
-              goldAngularDistance: this.goldPath.angularDistance
-            });
-
-            // Stop animation to prevent further errors
-            this.stop();
-            throw error; // Re-throw to surface the problem
-          }
+          this.performAzimuthChange();
         } else {
           return; // Still frozen
         }
