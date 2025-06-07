@@ -25,6 +25,29 @@
             color: #333;
         }
         
+        /* NEW: Clipping container for seals to exit beyond visible area */
+        .siegel-viewport {
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        .siegel-viewport bwv-siegel {
+            width: 100%;
+            height: 100%;
+            /* Radius now computed automatically based on container size! */
+        }
+        
         .controls-external {
             margin: 10px 0;
             padding: 15px;
@@ -95,19 +118,23 @@
     <h1>🎭 BWV Siegel Web Component Demo</h1>
     <p>Bach Siegel Animation with Quantized Light-Refraction Physics</p>
 
-    <!-- Basic Usage with Auto-start -->
+    <!-- Basic Usage with Auto-start and Clipping Container -->
     <div class="demo-section">
         <h2>Basic Usage with Auto-start Animation</h2>
-        <p>Simple drop-in component that starts animating automatically:</p>
-        <bwv-siegel quantization="8" auto-start></bwv-siegel>
+        <p>Simple drop-in component with clipping container - seals exit beyond visible area and teleport back from opposite side:</p>
+        
+        <div class="siegel-viewport">
+            <bwv-siegel quantization="8" auto-start></bwv-siegel>
+        </div>
+        
         <p style="font-size: 12px; color: #666; margin-top: 10px;">
-            💡 This component has no built-in controls - it just animates when <code>auto-start</code> is set.
+            💡 The gray checkered container clips the animation - seals exit beyond the visible area, teleport invisibly, and re-enter from the opposite side.
         </p>
     </div>
 
-    <!-- External API Control -->
+    <!-- External API Control with Clipping -->
     <div class="demo-section">
-        <h2>External API Control</h2>
+        <h2>External API Control with Clipping Container</h2>
         <p>The component has no built-in controls. Here's how to control it via JavaScript API:</p>
         
         <div class="controls-external">
@@ -126,7 +153,9 @@
             <button onclick="getStatus()" style="margin-left: 10px;">📊 Get Status</button>
         </div>
         
-        <bwv-siegel id="controlled-siegel" quantization="8"></bwv-siegel>
+        <div class="siegel-viewport">
+            <bwv-siegel id="controlled-siegel" quantization="8"></bwv-siegel>
+        </div>
         
         <h3>Event Log (shows component events):</h3>
         <div class="event-log" id="event-log"></div>
@@ -151,28 +180,32 @@ const status = siegel.status;
 console.log(status.isRunning, status.quantization);</code></pre>
     </div>
 
-    <!-- Multiple Instances -->
+    <!-- Multiple Instances with Different Containers -->
     <div class="demo-section">
-        <h2>Multiple Instances with Custom Controls</h2>
-        <p>Each instance can have its own controls:</p>
+        <h2>Multiple Instances with Custom Clipping</h2>
+        <p>Each instance can have its own clipping container:</p>
         
         <div class="grid">
             <div>
-                <h3>Simple Controls</h3>
+                <h3>Small Container (Q=4)</h3>
                 <div style="text-align: center; margin-bottom: 10px;">
                     <button onclick="document.getElementById('siegel1').start()" style="background: #28a745; color: white; border: none; padding: 5px 10px; margin: 2px; border-radius: 3px;">Start</button>
                     <button onclick="document.getElementById('siegel1').stop()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; margin: 2px; border-radius: 3px;">Stop</button>
                 </div>
-                <bwv-siegel id="siegel1" quantization="4" radius="80"></bwv-siegel>
-                <p style="text-align: center; font-size: 12px; color: #666;">Q=4 (Fast oscillating pattern)</p>
+                <div style="width: 200px; height: 200px; margin: 0 auto; border: 2px solid #28a745; border-radius: 50%; overflow: hidden; background: radial-gradient(circle, #f8f9fa 30%, #e9ecef 100%);">
+                    <bwv-siegel id="siegel1" quantization="4"></bwv-siegel>
+                </div>
+                <p style="text-align: center; font-size: 12px; color: #666;">Circular clipping with Q=4</p>
             </div>
             <div>
-                <h3>Styled Controls</h3>
+                <h3>Large Container (Q=16)</h3>
                 <div style="text-align: center; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 5px;">
                     <button onclick="toggleSiegel2()" id="toggle-btn" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 20px;">🎭 Toggle Animation</button>
                 </div>
-                <bwv-siegel id="siegel2" quantization="16" radius="100"></bwv-siegel>
-                <p style="text-align: center; font-size: 12px; color: #666;">Q=16 (Detailed angles)</p>
+                <div style="width: 400px; height: 300px; margin: 0 auto; border: 3px solid #6c757d; border-radius: 15px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <bwv-siegel id="siegel2" quantization="16"></bwv-siegel>
+                </div>
+                <p style="text-align: center; font-size: 12px; color: #666;">Rectangle clipping with Q=16</p>
             </div>
         </div>
     </div>
@@ -181,46 +214,68 @@ console.log(status.isRunning, status.quantization);</code></pre>
     <div class="demo-section">
         <h2>Framework Integration Examples</h2>
         
-        <h3>Vanilla JavaScript:</h3>
-        <pre><code>// Create programmatically
+        <h3>Vanilla JavaScript with Clipping:</h3>
+        <pre><code>// Create clipping container
+const viewport = document.createElement('div');
+viewport.style.cssText = `
+    width: 300px; 
+    height: 300px; 
+    overflow: hidden; 
+    border-radius: 8px;
+`;
+
+// Create siegel with automatic radius computation
 const siegel = document.createElement('bwv-siegel');
 siegel.setAttribute('quantization', '8');
-siegel.setAttribute('template-path', 'bwv-siegel.html');
-siegel.setAttribute('styles-path', 'bwv-siegel.css');
-siegel.setAttribute('svg-path', 'assets/siegel.svg');
-siegel.addEventListener('siegel-started', (e) => {
-    console.log('Started with Q=', e.detail.quantization);
-});
-document.body.appendChild(siegel);
+// No radius needed - computed automatically!
+siegel.style.cssText = 'width: 100%; height: 100%;';
+
+viewport.appendChild(siegel);
+document.body.appendChild(viewport);
 siegel.start();</code></pre>
         
-        <h3>React:</h3>
-        <pre><code>function App() {
+        <h3>React with Clipping:</h3>
+        <pre><code>function SiegelWithClipping({ quantization = 8 }) {
     const siegelRef = useRef();
     
     return (
-        &lt;bwv-siegel 
-            ref={siegelRef}
-            quantization="8"
-            template-path="bwv-siegel.html"
-            styles-path="bwv-siegel.css"
-            svg-path="assets/siegel.svg"
-            onSiegel-started={(e) => console.log('Started!')}
-        /&gt;
+        &lt;div style={{
+            width: '300px',
+            height: '300px', 
+            overflow: 'hidden',
+            borderRadius: '8px'
+        }}&gt;
+            &lt;bwv-siegel 
+                ref={siegelRef}
+                quantization={quantization}
+                auto-start
+            /&gt;
+        &lt;/div&gt;
     );
 }</code></pre>
         
-        <h3>Vue:</h3>
-        <pre><code>&lt;template&gt;
-    &lt;bwv-siegel 
-        :quantization="q" 
-        template-path="bwv-siegel.html"
-        styles-path="bwv-siegel.css"
-        svg-path="assets/siegel.svg"
-        @siegel-started="onStarted"
-        @quantization-changed="onQChanged"
-    /&gt;
-&lt;/template&gt;</code></pre>
+        <h3>CSS-only Clipping Options:</h3>
+        <pre><code>/* Circular clipping */
+.siegel-round {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+/* Hexagonal clipping */
+.siegel-hex {
+    width: 300px;
+    height: 260px;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+/* Star clipping */
+.siegel-star {
+    width: 300px;
+    height: 300px;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}</code></pre>
     </div>
 
     <!-- Import the Web Component -->
@@ -322,7 +377,7 @@ siegel.start();</code></pre>
         
         // Log initial load
         window.addEventListener('load', () => {
-            logEvent('🚀 BWV Siegel Web Component loaded');
+            logEvent('🚀 BWV Siegel Web Component loaded with clipping containers');
         });
     </script>
 </body>
