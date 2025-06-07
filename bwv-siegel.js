@@ -7,7 +7,7 @@ class BwvSiegel extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    
+
     // Initialize properties
     this.quantization = parseInt(this.getAttribute('quantization')) || 8;
     this.radius = parseInt(this.getAttribute('radius')) || 120;
@@ -15,21 +15,21 @@ class BwvSiegel extends HTMLElement {
     this.svgPath = this.getAttribute('svg-path') || 'assets/siegel.svg';
     this.templatePath = this.getAttribute('template-path') || 'bwv-siegel.html';
     this.stylesPath = this.getAttribute('styles-path') || 'bwv-siegel.css';
-    
+
     // Animation state
     this.isRunning = false;
     this.currentAnimation = null;
     this.angleCalculator = new AngleCalculator(this.quantization);
-    
+
     // Seal positions - Fixed starting positions
     this.leftSealFromAngle = 180;   // Left seal (blue JSB) from west
     this.rightSealFromAngle = 0;    // Right seal (gold BJS) from east
     this.leftSealToAngle = null;
     this.rightSealToAngle = null;
-    
+
     // Loading state
     this.isLoaded = false;
-    
+
     this.loadComponentFiles();
   }
 
@@ -39,7 +39,7 @@ class BwvSiegel extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
-    
+
     switch (name) {
       case 'quantization':
         this.quantization = parseInt(newValue) || 8;
@@ -70,41 +70,41 @@ class BwvSiegel extends HTMLElement {
     try {
       // Show loading state
       this.shadowRoot.innerHTML = '<div style="padding: 20px; text-align: center;">🎼 Loading BWV Siegel...</div>';
-      
+
       // Load HTML template and CSS styles in parallel
       const [htmlResponse, cssResponse] = await Promise.all([
         fetch(this.templatePath),
         fetch(this.stylesPath)
       ]);
-      
+
       if (!htmlResponse.ok) {
         throw new Error(`Template not found: ${this.templatePath}`);
       }
       if (!cssResponse.ok) {
         throw new Error(`Styles not found: ${this.stylesPath}`);
       }
-      
+
       const htmlTemplate = await htmlResponse.text();
       const cssStyles = await cssResponse.text();
-      
+
       // Process template variables
       const processedHtml = this.processTemplate(htmlTemplate);
       const processedCss = this.processTemplate(cssStyles);
-      
+
       // Render the component
       this.render(processedHtml, processedCss);
       this.initializeElements();
       this.checkSvgAvailability();
-      
+
       this.isLoaded = true;
-      
+
       if (this.autoStart) {
         // Start after a brief delay to ensure everything is loaded
         setTimeout(() => this.start(), 100);
       }
-      
+
       console.log('BWV Siegel: Component loaded successfully');
-      
+
     } catch (error) {
       console.error('BWV Siegel: Failed to load component files:', error);
       this.shadowRoot.innerHTML = `
@@ -157,18 +157,18 @@ class BwvSiegel extends HTMLElement {
       console.warn('BWV Siegel: Component not yet loaded. Please wait...');
       return;
     }
-    
+
     if (this.isRunning) return;
-    
+
     this.isRunning = true;
-    
+
     // Reset positions
     this.leftSealFromAngle = 180;
     this.rightSealFromAngle = 0;
-    
+
     // Start animation loop
     this.animationStep();
-    
+
     // Dispatch event
     this.dispatchEvent(new CustomEvent('siegel-started', {
       detail: { quantization: this.quantization }
@@ -177,13 +177,13 @@ class BwvSiegel extends HTMLElement {
 
   stop() {
     if (!this.isRunning) return;
-    
+
     this.isRunning = false;
-    
+
     // Hide seals
     if (this.leftSeal) this.leftSeal.classList.remove('active');
     if (this.rightSeal) this.rightSeal.classList.remove('active');
-    
+
     // Dispatch event
     this.dispatchEvent(new CustomEvent('siegel-stopped'));
   }
@@ -194,7 +194,7 @@ class BwvSiegel extends HTMLElement {
     this.rightSealFromAngle = 0;
     this.leftSealToAngle = null;
     this.rightSealToAngle = null;
-    
+
     // Dispatch event
     this.dispatchEvent(new CustomEvent('siegel-reset'));
   }
@@ -202,7 +202,7 @@ class BwvSiegel extends HTMLElement {
   setQuantization(newQ) {
     this.quantization = this.angleCalculator.setQuantization(newQ);
     this.setAttribute('quantization', this.quantization);
-    
+
     // Dispatch event
     this.dispatchEvent(new CustomEvent('quantization-changed', {
       detail: { quantization: this.quantization }
@@ -241,6 +241,8 @@ class BwvSiegel extends HTMLElement {
   }
 
   animateSeals() {
+    console.log(`🔍 BEFORE: leftFrom=${this.leftSealFromAngle}°, rightFrom=${this.rightSealFromAngle}°`);
+
     // Show seals
     this.leftSeal.classList.add('active');
     this.rightSeal.classList.add('active');
@@ -254,13 +256,22 @@ class BwvSiegel extends HTMLElement {
       // Brief pause, then animate to exit
       setTimeout(() => {
         if (!this.isRunning) return;
+        console.log(`🎯 EXITING: leftTo=${this.leftSealToAngle}°, rightTo=${this.rightSealToAngle}°`);
         this.animateToExit(() => {
           if (!this.isRunning) return;
-          
-          // Set up next iteration - physics already handled by AngleCalculator
-          this.leftSealFromAngle = this.leftSealToAngle % 360;
-          this.rightSealFromAngle = this.rightSealToAngle % 360;
-          
+
+          // **TELEPORT FIRST**: Instantly position seals at opposite side
+          this.leftSeal.style.transition = 'none';
+          this.rightSeal.style.transition = 'none';
+          this.setSealPosition(this.leftSeal, (this.leftSealToAngle + 180) % 360);
+          this.setSealPosition(this.rightSeal, (this.rightSealToAngle + 180) % 360);
+
+          // **THEN** set up next iteration variables to match new positions
+          this.leftSealFromAngle = (this.leftSealToAngle + 180) % 360;
+          this.rightSealFromAngle = (this.rightSealToAngle + 180) % 360;
+
+          console.log(`🔄 TELEPORTED TO: leftFrom=${this.leftSealFromAngle}°, rightFrom=${this.rightSealFromAngle}°`);
+
           // Continue loop
           setTimeout(() => this.animationStep(), 500);
         });
@@ -273,11 +284,11 @@ class BwvSiegel extends HTMLElement {
     const rect = container.getBoundingClientRect();
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    
+
     const radian = (angle * Math.PI) / 180;
     const x = centerX + this.radius * Math.cos(radian);
     const y = centerY + this.radius * Math.sin(radian);
-    
+
     seal.style.left = x + 'px';
     seal.style.top = y + 'px';
   }
@@ -287,34 +298,36 @@ class BwvSiegel extends HTMLElement {
     const rect = container.getBoundingClientRect();
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    
+
     // Simple CSS transition animation
     this.leftSeal.style.transition = 'left 0.8s ease-out, top 0.8s ease-out';
     this.rightSeal.style.transition = 'left 0.8s ease-out, top 0.8s ease-out';
-    
+
     this.leftSeal.style.left = centerX + 'px';
     this.leftSeal.style.top = centerY + 'px';
     this.rightSeal.style.left = centerX + 'px';
     this.rightSeal.style.top = centerY + 'px';
-    
+
     setTimeout(callback, 800);
   }
 
   animateToExit(callback) {
     this.leftSeal.style.transition = 'left 0.8s ease-in, top 0.8s ease-in';
     this.rightSeal.style.transition = 'left 0.8s ease-in, top 0.8s ease-in';
-    
+
     this.setSealPosition(this.leftSeal, this.leftSealToAngle);
     this.setSealPosition(this.rightSeal, this.rightSealToAngle);
-    
+
     setTimeout(callback, 800);
   }
+
+
 
   // Helper Methods
   updateSvgReferences() {
     const leftUse = this.shadowRoot.getElementById('left-seal-use');
     const rightUse = this.shadowRoot.getElementById('right-seal-use');
-    
+
     if (leftUse) {
       leftUse.setAttribute('href', `${this.svgPath}#bach_siel_full_left-symbol`);
     }
