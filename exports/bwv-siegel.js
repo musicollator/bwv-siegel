@@ -67,6 +67,9 @@ class BwvSiegel extends HTMLElement {
     this.templatePath = this.getAttribute('template-path') || 'bwv-siegel.html';
     this.stylesPath = this.getAttribute('styles-path') || 'bwv-siegel.css';
 
+    // NEW: Initialize freeze duration from attribute
+    this.freezeDuration = parseInt(this.getAttribute('freeze-duration')) || 800;
+    
     // 3D Animation state
     this.isRunning = false;
     this.scene = null;
@@ -90,7 +93,6 @@ class BwvSiegel extends HTMLElement {
     // Freeze at point C feature
     this.freezeAtC = false;
     this.freezeStartTime = 0;
-    this.freezeDuration = 800;
 
     // AngleCalculator integration
     this.angleCalculator = new AngleCalculator(this.quantization);
