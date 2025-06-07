@@ -1,49 +1,7 @@
-// bwv-siegel.js - Complete Self-Contained Web Component
+// bwv-siegel.js - Complete BWV Siegel Web Component
 // Bach Siegel Animation with Quantized Light-Refraction Physics
 
-class AngleCalculator {
-  constructor(quantization = 8) {
-    this.quantization = Math.max(2, quantization);
-  }
-
-  setQuantization(newQ) {
-    this.quantization = Math.max(2, newQ);
-    return this.quantization;
-  }
-
-  getSetOfAllowedAngles(entryAngle, otherExitAngle = null) {
-    const Q = this.quantization;
-    const step = 360 / Q;
-    const allowedAngles = [];
-
-    // Correct edge calculations for 90° < angle < 270°
-    const startQ = Math.floor(Q / 4) + 1;
-    const endQ = Math.ceil(3 * Q / 4) - 1;
-
-    for (let q = startQ; q <= endQ; q++) {
-      const angle = (entryAngle + q * step) % 360;
-
-      // If otherExitAngle is provided, exclude opposite direction
-      if (otherExitAngle !== null) {
-        const oppositeAngle = (otherExitAngle + 180) % 360;
-        if (angle === oppositeAngle) {
-          continue;
-        }
-      }
-      
-      allowedAngles.push(angle);
-    }
-
-    return allowedAngles;
-  }
-
-  getQuantizationRange() {
-    const Q = this.quantization;
-    const startQ = Math.floor(Q / 4) + 1;
-    const endQ = Math.ceil(3 * Q / 4) - 1;
-    return { startQ, endQ, step: 360 / Q };
-  }
-}
+import { AngleCalculator } from './src/AngleCalculator.js';
 
 class BwvSiegel extends HTMLElement {
   constructor() {
@@ -94,8 +52,16 @@ class BwvSiegel extends HTMLElement {
         this.autoStart = this.hasAttribute('auto-start');
         break;
       case 'svg-path':
-        this.svgPath = newValue || 'siegel.svg';
+        this.svgPath = newValue || 'assets/siegel.svg';
         this.updateSvgReferences();
+        break;
+      case 'template-path':
+        this.templatePath = newValue || 'bwv-siegel.html';
+        this.loadComponentFiles();
+        break;
+      case 'styles-path':
+        this.stylesPath = newValue || 'bwv-siegel.css';
+        this.loadComponentFiles();
         break;
     }
   }
@@ -291,9 +257,9 @@ class BwvSiegel extends HTMLElement {
         this.animateToExit(() => {
           if (!this.isRunning) return;
           
-          // Set up next iteration with opposite re-entry
-          this.leftSealFromAngle = (this.leftSealToAngle + 180) % 360;
-          this.rightSealFromAngle = (this.rightSealToAngle + 180) % 360;
+          // Set up next iteration - physics already handled by AngleCalculator
+          this.leftSealFromAngle = this.leftSealToAngle % 360;
+          this.rightSealFromAngle = this.rightSealToAngle % 360;
           
           // Continue loop
           setTimeout(() => this.animationStep(), 500);

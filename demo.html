@@ -27,20 +27,44 @@
         
         .controls-external {
             margin: 10px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 5px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
         }
         
         .controls-external button {
-            margin: 5px;
+            margin: 0;
             padding: 8px 16px;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 13px;
         }
         
         .controls-external button:hover {
             background: #0056b3;
+        }
+
+        .controls-external .quantization-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            color: white;
+            font-size: 13px;
+        }
+
+        .controls-external input {
+            width: 50px;
+            padding: 4px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
         }
         
         .event-log {
@@ -71,53 +95,84 @@
     <h1>🎭 BWV Siegel Web Component Demo</h1>
     <p>Bach Siegel Animation with Quantized Light-Refraction Physics</p>
 
-    <!-- Basic Usage -->
+    <!-- Basic Usage with Auto-start -->
     <div class="demo-section">
-        <h2>Basic Usage</h2>
-        <p>Simple drop-in component - clean and focused:</p>
-        <bwv-siegel quantization="8"></bwv-siegel>
-    </div>
-
-    <!-- Auto-start Example -->
-    <div class="demo-section">
-        <h2>Auto-start Animation</h2>
-        <p>Component starts automatically, no controls needed:</p>
-        <bwv-siegel quantization="6" auto-start></bwv-siegel>
+        <h2>Basic Usage with Auto-start Animation</h2>
+        <p>Simple drop-in component that starts animating automatically:</p>
+        <bwv-siegel quantization="8" auto-start></bwv-siegel>
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">
+            💡 This component has no built-in controls - it just animates when <code>auto-start</code> is set.
+        </p>
     </div>
 
     <!-- External API Control -->
     <div class="demo-section">
         <h2>External API Control</h2>
-        <p>Control the animation via JavaScript API (no built-in controls):</p>
+        <p>The component has no built-in controls. Here's how to control it via JavaScript API:</p>
         
         <div class="controls-external">
-            <button onclick="externalStart()">▶️ Start</button>
-            <button onclick="externalStop()">⏹️ Stop</button>
+            <button onclick="externalStart()">🎭 Start Animation</button>
+            <button onclick="externalStop()">🛑 Stop Animation</button>
             <button onclick="externalReset()">🔄 Reset</button>
-            <button onclick="setQ4()">Set Q=4</button>
-            <button onclick="setQ12()">Set Q=12</button>
-            <button onclick="getStatus()">Get Status</button>
+            
+            <div class="quantization-group">
+                <label>Quantization:</label>
+                <input type="number" id="q-input" min="2" max="24" value="8" onchange="updateQuantization()">
+                <button onclick="setQ4()">Q=4</button>
+                <button onclick="setQ8()">Q=8</button>
+                <button onclick="setQ16()">Q=16</button>
+            </div>
+            
+            <button onclick="getStatus()" style="margin-left: 10px;">📊 Get Status</button>
         </div>
         
         <bwv-siegel id="controlled-siegel" quantization="8"></bwv-siegel>
         
-        <h3>Event Log:</h3>
+        <h3>Event Log (shows component events):</h3>
         <div class="event-log" id="event-log"></div>
+        
+        <h3>Example Control Code:</h3>
+        <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px;"><code>// Get reference to component
+const siegel = document.getElementById('controlled-siegel');
+
+// Control methods
+siegel.start();                    // Start animation
+siegel.stop();                     // Stop animation  
+siegel.reset();                    // Reset to initial state
+siegel.setQuantization(12);        // Change quantization
+
+// Listen to events
+siegel.addEventListener('siegel-started', (e) => {
+    console.log('Started with Q=', e.detail.quantization);
+});
+
+// Get current status
+const status = siegel.status;
+console.log(status.isRunning, status.quantization);</code></pre>
     </div>
 
     <!-- Multiple Instances -->
     <div class="demo-section">
-        <h2>Multiple Instances</h2>
-        <p>Multiple independent Siegel animations:</p>
+        <h2>Multiple Instances with Custom Controls</h2>
+        <p>Each instance can have its own controls:</p>
         
         <div class="grid">
             <div>
-                <h3>Q=4 (Fast)</h3>
-                <bwv-siegel quantization="4" radius="80"></bwv-siegel>
+                <h3>Simple Controls</h3>
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <button onclick="document.getElementById('siegel1').start()" style="background: #28a745; color: white; border: none; padding: 5px 10px; margin: 2px; border-radius: 3px;">Start</button>
+                    <button onclick="document.getElementById('siegel1').stop()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; margin: 2px; border-radius: 3px;">Stop</button>
+                </div>
+                <bwv-siegel id="siegel1" quantization="4" radius="80"></bwv-siegel>
+                <p style="text-align: center; font-size: 12px; color: #666;">Q=4 (Fast oscillating pattern)</p>
             </div>
             <div>
-                <h3>Q=16 (Detailed)</h3>
-                <bwv-siegel quantization="16" radius="100"></bwv-siegel>
+                <h3>Styled Controls</h3>
+                <div style="text-align: center; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 5px;">
+                    <button onclick="toggleSiegel2()" id="toggle-btn" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 20px;">🎭 Toggle Animation</button>
+                </div>
+                <bwv-siegel id="siegel2" quantization="16" radius="100"></bwv-siegel>
+                <p style="text-align: center; font-size: 12px; color: #666;">Q=16 (Detailed angles)</p>
             </div>
         </div>
     </div>
@@ -197,19 +252,55 @@ siegel.start();</code></pre>
             logEvent('🔄 External reset() called');
         }
         
+        function updateQuantization() {
+            const input = document.getElementById('q-input');
+            const newQ = parseInt(input.value) || 8;
+            controlledSiegel.setQuantization(newQ);
+            logEvent(`📐 Quantization set to ${newQ}`);
+        }
+        
         function setQ4() {
-            controlledSiegel.setQuantization(4);
-            logEvent('📐 Quantization set to 4');
+            document.getElementById('q-input').value = 4;
+            updateQuantization();
+        }
+        
+        function setQ8() {
+            document.getElementById('q-input').value = 8;
+            updateQuantization();
         }
         
         function setQ12() {
-            controlledSiegel.setQuantization(12);
-            logEvent('📐 Quantization set to 12');
+            document.getElementById('q-input').value = 12;
+            updateQuantization();
+        }
+        
+        function setQ16() {
+            document.getElementById('q-input').value = 16;
+            updateQuantization();
         }
         
         function getStatus() {
             const status = controlledSiegel.status;
             logEvent(`📊 Status: ${JSON.stringify(status)}`);
+        }
+        
+        // Toggle function for the styled demo
+        let siegel2Running = false;
+        function toggleSiegel2() {
+            const siegel = document.getElementById('siegel2');
+            const btn = document.getElementById('toggle-btn');
+            
+            if (siegel2Running) {
+                siegel.stop();
+                btn.textContent = '🎭 Start Animation';
+                btn.style.background = '#6c757d';
+                siegel2Running = false;
+            } else {
+                siegel.start();
+                btn.textContent = '🛑 Stop Animation';
+                btn.style.background = '#dc3545';
+                siegel2Running = true;
+            }
         }
         
         // Listen to component events

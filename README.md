@@ -87,17 +87,20 @@ bwv-siegel/
 ├── README.md                    # Documentation  
 ├── assets/
 │   └── siegel.svg              # Original SVG symbols (single source of truth)
-├── bwv-siegel.js               # Component logic (loads external files)
+├── src/
+│   └── AngleCalculator.js      # Core angle calculation logic (testable module)
+├── bwv-siegel.js               # Component logic (imports AngleCalculator)
 ├── bwv-siegel.html             # Component template (HTML structure)
 ├── bwv-siegel.css              # Component styles (CSS styling)
 ├── demo.html                   # Comprehensive examples
 ├── package.json                # NPM configuration
 └── test/
-    └── angle-calculator.test.js # Unit tests
+    └── angle-calculator.test.js # Unit tests (tests the ACTUAL AngleCalculator)
 ```
 
-**🎯 Separation of Concerns:**
-- **Logic** (`bwv-siegel.js`) - Component behavior, physics calculations, and API
+**🎯 Proper Separation of Concerns:**
+- **Core Logic** (`src/AngleCalculator.js`) - Testable physics calculations module
+- **Component** (`bwv-siegel.js`) - Web Component wrapper (imports AngleCalculator)
 - **Template** (`bwv-siegel.html`) - Minimal HTML structure (just the seals)
 - **Styles** (`bwv-siegel.css`) - CSS styling and animations
 - **Assets** (`assets/siegel.svg`) - Vector graphics and symbols
@@ -384,4 +387,4 @@ Inspired by Bach's mathematical precision and the beauty of light refraction in 
 
 ---
 
-**Made with ❤️ and ⚡ by the BWV Siegel Team**
+**Made with ❤️ and ⚡ by the Christophe Thiebaud and https://claude.ai/*

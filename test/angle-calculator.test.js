@@ -1,60 +1,7 @@
 // test/angle-calculator.test.js - Unit tests for BWV Siegel angle calculations
 
 import assert from 'assert';
-
-// Extract AngleCalculator class for testing
-class AngleCalculator {
-  constructor(quantization = 8) {
-    this.quantization = Math.max(2, quantization);
-  }
-
-  setQuantization(newQ) {
-    this.quantization = Math.max(2, newQ);
-    return this.quantization;
-  }
-
-  getSetOfAllowedAngles(entryAngle, otherExitAngle = null) {
-    const Q = this.quantization;
-    const step = 360 / Q;
-    const allowedAngles = [];
-
-    // Edge calculations for 90° < angle < 270°
-    const startQ = Math.floor(Q / 4) + 1;
-    const endQ = Math.ceil(3 * Q / 4) - 1;
-
-    for (let q = startQ; q <= endQ; q++) {
-      const angle = (entryAngle + q * step) % 360;
-
-      // If otherExitAngle is provided, exclude opposite direction
-      if (otherExitAngle !== null) {
-        const oppositeAngle = (otherExitAngle + 180) % 360;
-        if (angle === oppositeAngle) {
-          continue;
-        }
-      }
-      
-      allowedAngles.push(angle);
-    }
-
-    return allowedAngles;
-  }
-
-  getQuantizationRange() {
-    const Q = this.quantization;
-    const startQ = Math.floor(Q / 4) + 1;
-    const endQ = Math.ceil(3 * Q / 4) - 1;
-    return { startQ, endQ, step: 360 / Q };
-  }
-
-  getAllQuantizedAngles() {
-    const step = 360 / this.quantization;
-    const angles = [];
-    for (let q = 0; q < this.quantization; q++) {
-      angles.push((q * step) % 360);
-    }
-    return angles;
-  }
-}
+import { AngleCalculator } from '../src/AngleCalculator.js';
 
 // Test Functions
 function testQuantizationRanges() {
@@ -193,12 +140,32 @@ function testEdgeCases() {
   // q=1: (180 + 1*180) % 360 = 0°
   assert.deepStrictEqual(angles2, [0], 'Q=2 should give one angle');
   
+  // Test Q=2 with opposition (should be allowed for low Q)
+  const rightAngles2 = calc2.getSetOfAllowedAngles(0, 0); // Right from 0°, left exits at 0°
+  // q=1: (0 + 1*180) % 360 = 180° (opposite of 0°, but should be allowed for Q=2)
+  assert.deepStrictEqual(rightAngles2, [180], 'Q=2 should allow opposites');
+  
+  // Test Q=4 oscillating pattern
+  const calc4 = new AngleCalculator(4);
+  const leftAngles4 = calc4.getSetOfAllowedAngles(180); // Left from 180°
+  // q=2: (180 + 2*90) % 360 = 0°
+  assert.deepStrictEqual(leftAngles4, [0], 'Q=4 left should exit at 0°');
+  
+  const rightAngles4 = calc4.getSetOfAllowedAngles(0, 0); // Right from 0°, left exits at 0°
+  // q=2: (0 + 2*90) % 360 = 180° (opposite of 0°, but should be allowed for Q=4)
+  assert.deepStrictEqual(rightAngles4, [180], 'Q=4 should allow oscillating pattern');
+  
   // Test large quantization Q=24
   const calc24 = new AngleCalculator(24);
   const angles24 = calc24.getSetOfAllowedAngles(180);
   assert.strictEqual(angles24.length > 0, true, 'Q=24 should have valid angles');
   
-  console.log('✅ Edge cases handled correctly');
+  // Test Q=24 opposition rule (should be enforced for high Q)
+  const rightAngles24 = calc24.getSetOfAllowedAngles(0, 180); // Right from 0°, left exits at 180°
+  // Should exclude 0° (opposite of 180°)
+  assert.strictEqual(rightAngles24.includes(0), false, 'Q=24 should exclude opposites');
+  
+  console.log('✅ Edge cases handled correctly (including Q=2, Q=4 oscillating patterns)');
 }
 
 function testRepeatedCalls() {
