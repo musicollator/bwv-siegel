@@ -1,5 +1,5 @@
 // bwv-siegel.js - ES6 module version with clean Three.js imports
-import { AngleCalculator } from './src/AngleCalculator.js';
+import { AngleCalculator } from './AngleCalculator.js';
 import {
   Scene,
   PerspectiveCamera,

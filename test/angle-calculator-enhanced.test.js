@@ -1,7 +1,7 @@
 // test/angle-calculator-enhanced.test.js - Unit tests for enhanced AngleCalculator with getNextAzimuth (CORRECTED)
 
 import assert from 'assert';
-import { AngleCalculator } from '../src/AngleCalculator.js';
+import { AngleCalculator } from '../exports/AngleCalculator.js';
 
 function testGetNextAzimuthSingleArgument() {
   console.log('🧪 Testing getNextAzimuth with single argument...');

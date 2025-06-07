@@ -227,7 +227,7 @@
         </div>
         
         <div class="siegel-viewport">
-            <bwv-siegel id="controlled-siegel" quantization="8"></bwv-siegel>
+            <bwv-siegel id="controlled-siegel" quantization="14" svg-path="exports/siegel.svg"></bwv-siegel>
         </div>
         
         <h3>Event Log (shows component events):</h3>
@@ -266,7 +266,7 @@ console.log(status.isRunning, status.quantization);</code></pre>
                     <button class="stop" onclick="document.getElementById('siegel1').stop()">Stop</button>
                 </div>
                 <div class="circular-container">
-                    <bwv-siegel id="siegel1" quantization="4"></bwv-siegel>
+                    <bwv-siegel id="siegel1" quantization="14" svg-path="exports/siegel.svg"></bwv-siegel>
                 </div>
                 <p style="text-align: center; font-size: 12px; color: #666;">Perfectly centered circular clipping with Q=4</p>
             </div>
@@ -276,7 +276,7 @@ console.log(status.isRunning, status.quantization);</code></pre>
                     <button onclick="toggleSiegel2()" id="toggle-btn">🎭 Toggle Animation</button>
                 </div>
                 <div class="large-container">
-                    <bwv-siegel id="siegel2" quantization="16"></bwv-siegel>
+                    <bwv-siegel id="siegel2" quantization="14" svg-path="exports/siegel.svg"></bwv-siegel>
                 </div>
                 <p style="text-align: center; font-size: 12px; color: #666;">Rectangle clipping with Q=16</p>
             </div>
@@ -295,6 +295,7 @@ viewport.className = 'circular-container';
 // Create siegel component
 const siegel = document.createElement('bwv-siegel');
 siegel.setAttribute('quantization', '8');
+siegel.setAttribute('svg-path', 'exports/siegel.svg');
 
 viewport.appendChild(siegel);
 document.body.appendChild(viewport);
@@ -309,6 +310,7 @@ siegel.start();</code></pre>
             &lt;bwv-siegel 
                 ref={siegelRef}
                 quantization={quantization}
+                svg-path="exports/siegel.svg"
                 auto-start
             /&gt;
         &lt;/div&gt;
@@ -353,7 +355,7 @@ siegel.start();</code></pre>
     </div>
 
     <!-- Import the Web Component -->
-    <script type="module" src="bwv-siegel.js"></script>
+    <script type="module" src="exports/bwv-siegel.js"></script>
     
     <script>
         // External control functions

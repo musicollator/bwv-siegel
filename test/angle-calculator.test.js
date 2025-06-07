@@ -1,7 +1,7 @@
 // test/angle-calculator.test.js - Unit tests for BWV Siegel angle calculations (CORRECTED)
 
 import assert from 'assert';
-import { AngleCalculator } from '../src/AngleCalculator.js';
+import { AngleCalculator } from '../exports/AngleCalculator.js';
 
 // Test Functions
 function testQuantizationRanges() {
