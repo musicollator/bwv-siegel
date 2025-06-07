@@ -8,14 +8,25 @@
   --siegel-radius: {{RADIUS}}px;
 }
 
+/* Three.js Container */
 .siegel-container {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
   overflow: hidden;
   background: white;
 }
 
+/* Three.js Canvas */
+#three-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Seals */
 .seal {
   position: absolute;
   width: 120px;
@@ -23,6 +34,8 @@
   display: none;
   transform: translate(-50%, -50%);
   transition: none;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .seal.active {
@@ -32,4 +45,13 @@
 .seal svg {
   width: 100%;
   height: 100%;
+}
+
+/* Specific z-index for each seal */
+#left-seal {
+  z-index: 20;  /* Higher - appears on top */
+}
+
+#right-seal {
+  z-index: 10;  /* Lower - appears behind left seal */
 }

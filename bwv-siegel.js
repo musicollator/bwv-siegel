@@ -1,5 +1,5 @@
-// bwv-siegel.js - Complete BWV Siegel Web Component
-// Bach Siegel Animation with Quantized Light-Refraction Physics
+// bwv-siegel.js - Simple Equatorial Geodesic Animation
+// One blue seal following the equator great circle
 
 import { AngleCalculator } from './src/AngleCalculator.js';
 
@@ -9,347 +9,238 @@ class BwvSiegel extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     
     // Initialize properties
-    this.quantization = parseInt(this.getAttribute('quantization')) || 8;
-    this.radius = parseInt(this.getAttribute('radius')) || 120;
-    this.autoStart = this.hasAttribute('auto-start');
     this.svgPath = this.getAttribute('svg-path') || 'assets/siegel.svg';
     this.templatePath = this.getAttribute('template-path') || 'bwv-siegel.html';
     this.stylesPath = this.getAttribute('styles-path') || 'bwv-siegel.css';
     
-    // Animation state
+    // 3D Animation state
     this.isRunning = false;
-    this.currentAnimation = null;
-    this.angleCalculator = new AngleCalculator(this.quantization);
+    this.scene = null;
+    this.camera = null;
+    this.renderer = null;
+    this.sphere = null;
+    this.leftSeal = null;
     
-    // Seal positions - Fixed starting positions
-    this.leftSealFromAngle = 180;   // Left seal (blue JSB) from west
-    this.rightSealFromAngle = 0;    // Right seal (gold BJS) from east
-    this.leftSealToAngle = null;
-    this.rightSealToAngle = null;
+    // Spherical physics
+    this.sphereRadius = 1.0;
+    this.leftPosition = null;
     
-    // Loading state
+    // Equatorial motion
+    this.azimuthalAngle = Math.PI; // Start at west (180°)
+    this.polarAngle = Math.PI/2;   // Equator (90°)
+    this.angularSpeed = 0.02;      // Speed around equator
+    
+    this.animationId = null;
     this.isLoaded = false;
     
     this.loadComponentFiles();
   }
 
-  static get observedAttributes() {
-    return ['quantization', 'radius', 'auto-start', 'svg-path', 'template-path', 'styles-path'];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue) return;
-    
-    switch (name) {
-      case 'quantization':
-        this.quantization = parseInt(newValue) || 8;
-        this.angleCalculator.setQuantization(this.quantization);
-        break;
-      case 'radius':
-        this.radius = parseInt(newValue) || 120;
-        break;
-      case 'auto-start':
-        this.autoStart = this.hasAttribute('auto-start');
-        break;
-      case 'svg-path':
-        this.svgPath = newValue || 'assets/siegel.svg';
-        this.updateSvgReferences();
-        break;
-      case 'template-path':
-        this.templatePath = newValue || 'bwv-siegel.html';
-        this.loadComponentFiles();
-        break;
-      case 'styles-path':
-        this.stylesPath = newValue || 'bwv-siegel.css';
-        this.loadComponentFiles();
-        break;
-    }
-  }
-
   async loadComponentFiles() {
     try {
-      // Show loading state
-      this.shadowRoot.innerHTML = '<div style="padding: 20px; text-align: center;">🎼 Loading BWV Siegel...</div>';
+      this.shadowRoot.innerHTML = '<div style="padding: 20px; text-align: center;">🎼 Loading Simple BWV Siegel...</div>';
       
-      // Load HTML template and CSS styles in parallel
+      if (typeof THREE === 'undefined') {
+        await this.loadThreeJS();
+      }
+      
       const [htmlResponse, cssResponse] = await Promise.all([
         fetch(this.templatePath),
         fetch(this.stylesPath)
       ]);
       
-      if (!htmlResponse.ok) {
-        throw new Error(`Template not found: ${this.templatePath}`);
-      }
-      if (!cssResponse.ok) {
-        throw new Error(`Styles not found: ${this.stylesPath}`);
+      if (!htmlResponse.ok || !cssResponse.ok) {
+        throw new Error('Template or CSS not found');
       }
       
       const htmlTemplate = await htmlResponse.text();
       const cssStyles = await cssResponse.text();
       
-      // Process template variables
-      const processedHtml = this.processTemplate(htmlTemplate);
-      const processedCss = this.processTemplate(cssStyles);
-      
-      // Render the component
-      this.render(processedHtml, processedCss);
-      this.initializeElements();
-      this.checkSvgAvailability();
+      this.render(htmlTemplate, cssStyles);
+      this.initializeThreeJS();
       
       this.isLoaded = true;
       
-      if (this.autoStart) {
-        // Start after a brief delay to ensure everything is loaded
-        setTimeout(() => this.start(), 100);
-      }
+      // Auto-start the simple animation
+      setTimeout(() => this.start(), 100);
       
-      console.log('BWV Siegel: Component loaded successfully');
+      console.log('Simple BWV Siegel loaded');
       
     } catch (error) {
-      console.error('BWV Siegel: Failed to load component files:', error);
-      this.shadowRoot.innerHTML = `
-        <div style="padding: 20px; color: red; font-family: Arial, sans-serif;">
-          <h3>❌ BWV Siegel Load Error</h3>
-          <p>${error.message}</p>
-          <p>Make sure <code>${this.templatePath}</code> and <code>${this.stylesPath}</code> are available.</p>
-        </div>
-      `;
+      console.error('Failed to load:', error);
+      this.shadowRoot.innerHTML = `<div style="padding: 20px; color: red;">❌ Load Error: ${error.message}</div>`;
     }
+  }
+
+  async loadThreeJS() {
+    return new Promise((resolve, reject) => {
+      if (typeof THREE !== 'undefined') {
+        resolve();
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      script.onload = () => {
+        setTimeout(() => {
+          if (typeof THREE !== 'undefined') {
+            resolve();
+          } else {
+            reject(new Error('Three.js failed to load'));
+          }
+        }, 100);
+      };
+      script.onerror = () => reject(new Error('Failed to load Three.js'));
+      document.head.appendChild(script);
+    });
   }
 
   processTemplate(template) {
     return template
       .replace(/\{\{SVG_PATH\}\}/g, this.svgPath)
-      .replace(/\{\{QUANTIZATION\}\}/g, this.quantization)
-      .replace(/\{\{RADIUS\}\}/g, this.radius);
+      .replace(/\{\{QUANTIZATION\}\}/g, 8)
+      .replace(/\{\{RADIUS\}\}/g, 120);
   }
 
   render(htmlTemplate, cssStyles) {
+    // Process template variables
+    const processedHtml = this.processTemplate(htmlTemplate);
+    const processedCss = this.processTemplate(cssStyles);
+    
     this.shadowRoot.innerHTML = `
-      <style>${cssStyles}</style>
-      ${htmlTemplate}
+      <style>${processedCss}</style>
+      <div class="siegel-container">
+        <canvas id="three-canvas"></canvas>
+        ${processedHtml}
+      </div>
     `;
   }
 
-  initializeElements() {
+  initializeThreeJS() {
+    const container = this.shadowRoot.querySelector('.siegel-container');
+    const canvas = this.shadowRoot.getElementById('three-canvas');
+    
+    // Initialize Three.js objects
+    this.leftPosition = new THREE.Vector3();
+    
+    // Scene setup
+    this.scene = new THREE.Scene();
+    
+    // Camera looking at sphere from front
+    this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    this.camera.position.set(0, 0, 2);
+    this.camera.lookAt(0, 0, 0);
+    
+    // Renderer
+    this.renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+    this.renderer.setSize(container.clientWidth, container.clientHeight);
+    this.renderer.setClearColor(0x000000, 0);
+    
+    // Sphere (visible for reference)
+    const sphereGeometry = new THREE.SphereGeometry(this.sphereRadius, 32, 32);
+    const sphereMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0xffffff, 
+      wireframe: true, 
+      transparent: true, 
+      opacity: 0.2 
+    });
+    this.sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    this.scene.add(this.sphere);
+    
+    // Seal DOM element
     this.leftSeal = this.shadowRoot.getElementById('left-seal');
-    this.rightSeal = this.shadowRoot.getElementById('right-seal');
+    
+    // Initialize position at west point of equator
+    this.updateSealPosition();
   }
 
-  checkSvgAvailability() {
-    // Check if SVG file is accessible
-    fetch(this.svgPath, { method: 'HEAD' })
-      .then(response => {
-        if (!response.ok) {
-          console.warn(`BWV Siegel: SVG file not found at '${this.svgPath}'. Seals may not display correctly.`);
-        } else {
-          console.log(`BWV Siegel: SVG loaded successfully from '${this.svgPath}'`);
-        }
-      })
-      .catch(error => {
-        console.warn(`BWV Siegel: Cannot access SVG file '${this.svgPath}':`, error.message);
-      });
+  updateSealPosition() {
+    // Calculate position on sphere using spherical coordinates
+    this.leftPosition.setFromSphericalCoords(
+      this.sphereRadius,
+      this.polarAngle,      // π/2 = equator
+      this.azimuthalAngle   // 0 to 2π around equator
+    );
   }
 
-  // Public API Methods
-  start() {
-    if (!this.isLoaded) {
-      console.warn('BWV Siegel: Component not yet loaded. Please wait...');
-      return;
+  moveAlongEquator() {
+    // Move around equator (increment azimuthal angle)
+    this.azimuthalAngle += this.angularSpeed;
+    
+    // Keep angle in [0, 2π] range
+    if (this.azimuthalAngle > 2 * Math.PI) {
+      this.azimuthalAngle -= 2 * Math.PI;
     }
     
+    // Update position
+    this.updateSealPosition();
+  }
+
+  projectToScreen(point3D) {
+    const vector = point3D.clone();
+    vector.project(this.camera);
+    
+    const canvas = this.shadowRoot.getElementById('three-canvas');
+    const x = (vector.x + 1) * canvas.width / 2;
+    const y = (-vector.y + 1) * canvas.height / 2;
+    
+    return { x, y };
+  }
+
+  updateSealDisplay() {
+    // Project to screen coordinates
+    const screenPos = this.projectToScreen(this.leftPosition);
+    
+    // Update DOM position
+    this.leftSeal.style.left = screenPos.x + 'px';
+    this.leftSeal.style.top = screenPos.y + 'px';
+    this.leftSeal.style.display = 'block';
+    
+    // Scale based on distance (closer = larger)
+    const scale = Math.max(0.1, (this.leftPosition.z + this.sphereRadius) / (2 * this.sphereRadius));
+    this.leftSeal.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+
+  animate() {
+    if (!this.isRunning) return;
+    
+    // Move along equator
+    this.moveAlongEquator();
+    
+    // Update visual
+    this.updateSealDisplay();
+    
+    // Render scene
+    this.renderer.render(this.scene, this.camera);
+    
+    // Continue
+    this.animationId = requestAnimationFrame(() => this.animate());
+  }
+
+  start() {
+    if (!this.isLoaded) return;
     if (this.isRunning) return;
     
     this.isRunning = true;
+    this.animate();
     
-    // Reset positions
-    this.leftSealFromAngle = 180;
-    this.rightSealFromAngle = 0;
-    
-    // Start animation loop
-    this.animationStep();
-    
-    // Dispatch event
-    this.dispatchEvent(new CustomEvent('siegel-started', {
-      detail: { quantization: this.quantization }
-    }));
+    console.log('🌍 Blue seal starting equatorial journey');
   }
 
   stop() {
-    if (!this.isRunning) return;
-    
     this.isRunning = false;
-    
-    // Hide seals
-    if (this.leftSeal) this.leftSeal.classList.remove('active');
-    if (this.rightSeal) this.rightSeal.classList.remove('active');
-    
-    // Dispatch event
-    this.dispatchEvent(new CustomEvent('siegel-stopped'));
-  }
-
-  reset() {
-    this.stop();
-    this.leftSealFromAngle = 180;
-    this.rightSealFromAngle = 0;
-    this.leftSealToAngle = null;
-    this.rightSealToAngle = null;
-    
-    // Dispatch event
-    this.dispatchEvent(new CustomEvent('siegel-reset'));
-  }
-
-  setQuantization(newQ) {
-    this.quantization = this.angleCalculator.setQuantization(newQ);
-    this.setAttribute('quantization', this.quantization);
-    
-    // Dispatch event
-    this.dispatchEvent(new CustomEvent('quantization-changed', {
-      detail: { quantization: this.quantization }
-    }));
-  }
-
-  // Animation Logic
-  animationStep() {
-    if (!this.isRunning) return;
-
-    try {
-      this.pickExitAngles();
-      this.animateSeals();
-    } catch (error) {
-      console.error('Animation error:', error);
-      this.stop();
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
     }
+    if (this.leftSeal) this.leftSeal.style.display = 'none';
   }
 
-  pickExitAngles() {
-    // Calculate left seal exit angle
-    const leftAllowed = this.angleCalculator.getSetOfAllowedAngles(this.leftSealFromAngle);
-    if (leftAllowed.length === 0) {
-      throw new Error("No valid left exit angles found!");
-    }
-    this.leftSealToAngle = leftAllowed[Math.floor(Math.random() * leftAllowed.length)];
-
-    // Calculate right seal exit angle (exclude opposite of left)
-    const rightAllowed = this.angleCalculator.getSetOfAllowedAngles(this.rightSealFromAngle, this.leftSealToAngle);
-    if (rightAllowed.length === 0) {
-      throw new Error("No valid right exit angles found!");
-    }
-    this.rightSealToAngle = rightAllowed[Math.floor(Math.random() * rightAllowed.length)];
-
-    console.log(`🎭 BWV Siegel: Left ${this.leftSealFromAngle}°→${this.leftSealToAngle}°, Right ${this.rightSealFromAngle}°→${this.rightSealToAngle}°`);
-  }
-
-  animateSeals() {
-    // Show seals
-    this.leftSeal.classList.add('active');
-    this.rightSeal.classList.add('active');
-
-    // Set initial positions
-    this.setSealPosition(this.leftSeal, this.leftSealFromAngle);
-    this.setSealPosition(this.rightSeal, this.rightSealFromAngle);
-
-    // Animate to center
-    this.animateToCenter(() => {
-      // Brief pause, then animate to exit
-      setTimeout(() => {
-        if (!this.isRunning) return;
-        this.animateToExit(() => {
-          if (!this.isRunning) return;
-          
-          // **TELEPORT FIRST**: Instantly position seals at opposite side
-          this.leftSeal.style.transition = 'none';
-          this.rightSeal.style.transition = 'none';
-          this.setSealPosition(this.leftSeal, (this.leftSealToAngle + 180) % 360);
-          this.setSealPosition(this.rightSeal, (this.rightSealToAngle + 180) % 360);
-          
-          // **THEN** set up next iteration variables to match new positions
-          this.leftSealFromAngle = (this.leftSealToAngle + 180) % 360;
-          this.rightSealFromAngle = (this.rightSealToAngle + 180) % 360;
-          
-          console.log(`🔄 TELEPORTED TO: leftFrom=${this.leftSealFromAngle}°, rightFrom=${this.rightSealFromAngle}°`);
-          
-          // Continue loop
-          setTimeout(() => this.animationStep(), 500);
-        });
-      }, 800);
-    });
-  }
-
-  setSealPosition(seal, angle) {
-    const container = this.shadowRoot.querySelector('.siegel-container');
-    const rect = container.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    // Dynamic radius: ensure seals go completely outside container
-    // Use diagonal distance + seal size for guaranteed complete exit
-    const containerDiagonal = Math.sqrt(rect.width * rect.width + rect.height * rect.height);
-    const sealSize = 120; // Seal dimensions
-    const dynamicRadius = (containerDiagonal / 2) + sealSize + 20; // Extra 20px safety margin
-    
-    const radian = (angle * Math.PI) / 180;
-    const x = centerX + dynamicRadius * Math.cos(radian);
-    const y = centerY + dynamicRadius * Math.sin(radian);
-    
-    seal.style.left = x + 'px';
-    seal.style.top = y + 'px';
-  }
-
-  animateToCenter(callback) {
-    const container = this.shadowRoot.querySelector('.siegel-container');
-    const rect = container.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    // Simple CSS transition animation
-    this.leftSeal.style.transition = 'left 0.8s ease-out, top 0.8s ease-out';
-    this.rightSeal.style.transition = 'left 0.8s ease-out, top 0.8s ease-out';
-    
-    this.leftSeal.style.left = centerX + 'px';
-    this.leftSeal.style.top = centerY + 'px';
-    this.rightSeal.style.left = centerX + 'px';
-    this.rightSeal.style.top = centerY + 'px';
-    
-    setTimeout(callback, 800);
-  }
-
-  animateToExit(callback) {
-    this.leftSeal.style.transition = 'left 0.8s ease-in, top 0.8s ease-in';
-    this.rightSeal.style.transition = 'left 0.8s ease-in, top 0.8s ease-in';
-    
-    this.setSealPosition(this.leftSeal, this.leftSealToAngle);
-    this.setSealPosition(this.rightSeal, this.rightSealToAngle);
-    
-    setTimeout(callback, 800);
-  }
-
-  // Helper Methods
-  updateSvgReferences() {
-    const leftUse = this.shadowRoot.getElementById('left-seal-use');
-    const rightUse = this.shadowRoot.getElementById('right-seal-use');
-    
-    if (leftUse) {
-      leftUse.setAttribute('href', `${this.svgPath}#bach_siel_full_left-symbol`);
-    }
-    if (rightUse) {
-      rightUse.setAttribute('href', `${this.svgPath}#bach_siel_full_right-symbol`);
-    }
-  }
-
-  // Getters for external access
-  get status() {
-    return {
-      isRunning: this.isRunning,
-      quantization: this.quantization,
-      leftSeal: { from: this.leftSealFromAngle, to: this.leftSealToAngle },
-      rightSeal: { from: this.rightSealFromAngle, to: this.rightSealToAngle }
-    };
-  }
+  // Legacy compatibility for demo
+  reset() { this.stop(); this.start(); }
+  setQuantization() {} 
+  get status() { return { isRunning: this.isRunning }; }
 }
 
-// Register the Web Component
 customElements.define('bwv-siegel', BwvSiegel);
-
-// Export for module usage
 export default BwvSiegel;
