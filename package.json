@@ -1,0 +1,57 @@
+
+{
+  "name": "bwv-siegel",
+  "version": "1.0.0",
+  "description": "Bach Siegel Animation Web Component with Quantized Light-Refraction Physics",
+  "type": "module",
+  "main": "bwv-siegel.js",
+  "module": "bwv-siegel.js",
+  "browser": "bwv-siegel.js",
+  "exports": {
+    ".": "./bwv-siegel.js",
+    "./component": "./bwv-siegel.js"
+  },
+  "files": [
+    "bwv-siegel.js",
+    "demo.html",
+    "test/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/angle-calculator.test.js",
+    "demo": "python -m http.server 8080",
+    "build": "echo 'No build step needed - pure Web Component'",
+    "lint": "echo 'Add ESLint if needed'",
+    "dev": "python -m http.server 8080"
+  },
+  "keywords": [
+    "bach",
+    "siegel", 
+    "animation",
+    "web-component",
+    "quantization",
+    "physics",
+    "light-refraction",
+    "custom-element"
+  ],
+  "author": "Christophe Thiebaud",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/bwv-siegel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/bwv-siegel/issues"
+  },
+  "homepage": "https://github.com/yourusername/bwv-siegel#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "defaults",
+    "supports es6-module"
+  ],
+  "devDependencies": {
+    "assert": "^2.0.0"
+  }
+}

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BWV Siegel Web Component Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .demo-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .controls-external {
+            margin: 10px 0;
+        }
+        
+        .controls-external button {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .controls-external button:hover {
+            background: #0056b3;
+        }
+        
+        .event-log {
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎭 BWV Siegel Web Component Demo</h1>
+    <p>Bach Siegel Animation with Quantized Light-Refraction Physics</p>
+
+    <!-- Basic Usage -->
+    <div class="demo-section">
+        <h2>Basic Usage</h2>
+        <p>Simple drop-in component with default settings:</p>
+        <bwv-siegel quantization="8"></bwv-siegel>
+    </div>
+
+    <!-- Auto-start Example -->
+    <div class="demo-section">
+        <h2>Auto-start with Custom Quantization</h2>
+        <p>Automatically starts animation with Q=6:</p>
+        <bwv-siegel quantization="6" auto-start></bwv-siegel>
+    </div>
+
+    <!-- External Controls Example -->
+    <div class="demo-section">
+        <h2>External API Control</h2>
+        <p>Control the animation from JavaScript:</p>
+        
+        <div class="controls-external">
+            <button onclick="externalStart()">▶️ Start</button>
+            <button onclick="externalStop()">⏹️ Stop</button>
+            <button onclick="externalReset()">🔄 Reset</button>
+            <button onclick="setQ4()">Set Q=4</button>
+            <button onclick="setQ12()">Set Q=12</button>
+            <button onclick="getStatus()">Get Status</button>
+        </div>
+        
+        <bwv-siegel id="controlled-siegel" quantization="8"></bwv-siegel>
+        
+        <h3>Event Log:</h3>
+        <div class="event-log" id="event-log"></div>
+    </div>
+
+    <!-- Multiple Instances -->
+    <div class="demo-section">
+        <h2>Multiple Instances</h2>
+        <p>Multiple independent Siegel animations:</p>
+        
+        <div class="grid">
+            <div>
+                <h3>Q=4 (Fast)</h3>
+                <bwv-siegel quantization="4" radius="80"></bwv-siegel>
+            </div>
+            <div>
+                <h3>Q=16 (Detailed)</h3>
+                <bwv-siegel quantization="16" radius="100"></bwv-siegel>
+            </div>
+        </div>
+    </div>
+
+    <!-- Framework Integration Example -->
+    <div class="demo-section">
+        <h2>Framework Integration Examples</h2>
+        
+        <h3>Vanilla JavaScript:</h3>
+        <pre><code>// Create programmatically
+const siegel = document.createElement('bwv-siegel');
+siegel.setAttribute('quantization', '8');
+siegel.addEventListener('siegel-started', (e) => {
+    console.log('Started with Q=', e.detail.quantization);
+});
+document.body.appendChild(siegel);
+siegel.start();</code></pre>
+        
+        <h3>React:</h3>
+        <pre><code>function App() {
+    const siegelRef = useRef();
+    
+    return (
+        &lt;bwv-siegel 
+            ref={siegelRef}
+            quantization="8"
+            onSiegel-started={(e) => console.log('Started!')}
+        /&gt;
+    );
+}</code></pre>
+        
+        <h3>Vue:</h3>
+        <pre><code>&lt;template&gt;
+    &lt;bwv-siegel 
+        :quantization="q" 
+        @siegel-started="onStarted"
+        @quantization-changed="onQChanged"
+    /&gt;
+&lt;/template&gt;</code></pre>
+    </div>
+
+    <!-- Import the Web Component -->
+    <script type="module" src="bwv-siegel.js"></script>
+    
+    <script>
+        // External control functions
+        const controlledSiegel = document.getElementById('controlled-siegel');
+        const eventLog = document.getElementById('event-log');
+        
+        function logEvent(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            eventLog.innerHTML += `[${timestamp}] ${message}\n`;
+            eventLog.scrollTop = eventLog.scrollHeight;
+        }
+        
+        function externalStart() {
+            controlledSiegel.start();
+            logEvent('🎭 External start() called');
+        }
+        
+        function externalStop() {
+            controlledSiegel.stop();
+            logEvent('🛑 External stop() called');
+        }
+        
+        function externalReset() {
+            controlledSiegel.reset();
+            logEvent('🔄 External reset() called');
+        }
+        
+        function setQ4() {
+            controlledSiegel.setQuantization(4);
+            logEvent('📐 Quantization set to 4');
+        }
+        
+        function setQ12() {
+            controlledSiegel.setQuantization(12);
+            logEvent('📐 Quantization set to 12');
+        }
+        
+        function getStatus() {
+            const status = controlledSiegel.status;
+            logEvent(`📊 Status: ${JSON.stringify(status)}`);
+        }
+        
+        // Listen to component events
+        controlledSiegel.addEventListener('siegel-started', (e) => {
+            logEvent(`🎬 Animation started (Q=${e.detail.quantization})`);
+        });
+        
+        controlledSiegel.addEventListener('siegel-stopped', () => {
+            logEvent('⏹️ Animation stopped');
+        });
+        
+        controlledSiegel.addEventListener('siegel-reset', () => {
+            logEvent('🔄 Animation reset');
+        });
+        
+        controlledSiegel.addEventListener('quantization-changed', (e) => {
+            logEvent(`📐 Quantization changed to ${e.detail.quantization}`);
+        });
+        
+        // Log initial load
+        window.addEventListener('load', () => {
+            logEvent('🚀 BWV Siegel Web Component loaded');
+        });
+    </script>
+</body>
+</html>
