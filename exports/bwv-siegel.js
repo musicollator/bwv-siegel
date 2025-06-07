@@ -203,12 +203,12 @@ class BwvSiegel extends HTMLElement {
     this.leftSeal = this.shadowRoot.getElementById('left-seal');
     this.rightSeal = this.shadowRoot.getElementById('right-seal');
 
-    // Initialize paths
-    this.bluePath = new GeodesicPath(90, Math.PI);
+    // Initialize paths - start at center (point C) for better mobile experience
+    this.bluePath = new GeodesicPath(90, 0);
     this.bluePath.initialize();
 
     const goldAzimuth = (90 + 180) % 360;
-    this.goldPath = new GeodesicPath(goldAzimuth, Math.PI);
+    this.goldPath = new GeodesicPath(goldAzimuth, 0);
     this.goldPath.initialize();
 
     // Add resize listener
