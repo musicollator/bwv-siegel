@@ -11,7 +11,7 @@ function testGetNextAzimuthSingleArgument() {
   // Test that returned angle is always in allowed set
   for (let i = 0; i < 50; i++) {  // Reduced iterations for faster testing
     const previousAzimuth = Math.floor(Math.random() * 360);
-    const allowedAngles = calc.getSetOfAllowedAngles(previousAzimuth);
+    const allowedAngles = calc.getSetOfAllowedAzimuths(previousAzimuth);
     
     if (allowedAngles.length > 0) {
       const nextAzimuth = calc.getNextAzimuth(previousAzimuth);
@@ -33,7 +33,7 @@ function testGetNextAzimuthDualArgument() {
     const previousAzimuth = Math.floor(Math.random() * 360);
     const otherSealAzimuth = Math.floor(Math.random() * 360);
     
-    const allowedAngles = calc.getSetOfAllowedAngles(previousAzimuth, otherSealAzimuth);
+    const allowedAngles = calc.getSetOfAllowedAzimuths(previousAzimuth, otherSealAzimuth);
     
     if (allowedAngles.length > 0) {
       const nextAzimuth = calc.getNextAzimuth(previousAzimuth, otherSealAzimuth);
@@ -56,7 +56,7 @@ function testForwardDirectionContinuity() {
   
   // Test entry from 180° (west) - should favor straight ahead (0°) if available
   const previousAzimuth = 180;
-  const allowedAngles = calc.getSetOfAllowedAngles(previousAzimuth);
+  const allowedAngles = calc.getSetOfAllowedAzimuths(previousAzimuth);
   
   console.log(`   Forward directions from ${previousAzimuth}°: [${allowedAngles.sort((a,b) => a-b)}]°`);
   
@@ -132,7 +132,7 @@ function testConsistencyAndReproducibility() {
   const calc = new AngleCalculator(8);
   
   // Test that same inputs give results from same distribution
-  const allowedAngles = calc.getSetOfAllowedAngles(180);
+  const allowedAngles = calc.getSetOfAllowedAzimuths(180);
   
   for (let i = 0; i < 20; i++) {
     const result = calc.getNextAzimuth(180);

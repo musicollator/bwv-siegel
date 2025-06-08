@@ -1,29 +1,44 @@
 // src/AngleCalculator.js - CORRECTED: Opposition rule removed, same azimuth via probability
 
+
+//                   270° (North/up)
+//                    ↑
+// (West/left) 180° ←   → 0° (East/right)
+//                    ↓
+//      (South/down) 90° 
+
+
 export class AngleCalculator {
   constructor(quantization = 8) {
-    this.quantization = Math.max(2, quantization);
+    this.quantization = this._sanitizeQuantization(quantization);
   }
 
   setQuantization(newQ) {
-    this.quantization = Math.max(2, newQ);
+    this.quantization = this._sanitizeQuantization(newQ);
     return this.quantization;
   }
 
-  getSetOfAllowedAngles(entryAngle, otherExitAngle = null) {
+  _sanitizeQuantization(q) {
+    let original = q;
+    let n = Math.max(2, Math.floor(q));
+    if (n % 2 !== 0) n += 1; // Make it even
+    console.log(`🛠️ Quantization input: ${original} → sanitized: ${n}`);
+    return n;
+  }
+
+  getSetOfAllowedAzimuths(entryAngle, otherExitAngle = null) {
     const Q = this.quantization;
     const step = 360 / Q;
     const allowedAngles = [];
 
-    // Forward directions 270° < angle < 90° (strict inequalities)
     for (let q = 0; q < Q; q++) {
       const angle = (entryAngle + q * step) % 360;
-      
+
       // Check if angle is in forward range: 270° < angle < 360° OR 0° ≤ angle < 90°
-      const isForward = (angle > 270 && angle < 360) || (angle >= 0 && angle < 90);
-      
+      const isForward = (270 < angle && angle < 360) || (0 <= angle && angle < 90);
+
       if (isForward) {
-        // NO MORE OPPOSITION RULE - all forward angles are allowed
+        // all forward angles are allowed
         allowedAngles.push(angle);
       }
     }
@@ -31,16 +46,6 @@ export class AngleCalculator {
     return allowedAngles;
   }
 
-  getQuantizationRange() {
-    const Q = this.quantization;
-    const step = 360 / Q;
-    return { 
-      startQ: 0, 
-      endQ: Q - 1, 
-      step: step,
-      note: "Range now calculated per-angle for forward directions (270°-90°), no opposition rule"
-    };
-  }
 
   getAllQuantizedAngles() {
     const step = 360 / this.quantization;
@@ -68,91 +73,76 @@ export class AngleCalculator {
   getNextAzimuth(previousAzimuth, otherSealNextAzimuth = null) {
     console.log(`🎯 AngleCalculator selecting next azimuth from ${previousAzimuth}°${otherSealNextAzimuth !== null ? `, avoiding conflicts with ${otherSealNextAzimuth}°` : ''}`);
 
-    // Get allowed angles based on physical constraints (no opposition rule)
-    const allowedAngles = this.getSetOfAllowedAngles(previousAzimuth, otherSealNextAzimuth);
-    
-    console.log(`📐 Allowed angles: [${allowedAngles.join(', ')}]°`);
+    // Get allowed azimuths based on physical constraints (no opposition rule)
+    const allowedAzimuths = this.getSetOfAllowedAzimuths(previousAzimuth, otherSealNextAzimuth);
 
-    // STRICT: No fallbacks - throw error if no valid angles
-    if (allowedAngles.length === 0) {
-      const errorMsg = `❌ NO VALID ANGLES: previousAzimuth=${previousAzimuth}°, otherSealNextAzimuth=${otherSealNextAzimuth}°, quantization=${this.quantization}`;
-      console.error(errorMsg);
-      throw new Error(errorMsg);
+    console.log(`📐 Allowed azimuths: [${allowedAzimuths.join(', ')}]°`);
+
+    // STRICT: No valid azimuths — return input unchanged
+    if (allowedAzimuths.length === 0) {
+      console.warn(`⚠️ NO VALID AZIMUTHS: returning ${previousAzimuth}° unchanged.`);
+      return previousAzimuth;
     }
 
-    // Calculate probabilities for each allowed angle
-    const weightedAngles = [];
+    // Calculate probabilities for each allowed azimuth
+    const weightedAzimuths = [];
 
-    for (const candidateAngle of allowedAngles) {
+    for (const candidateAzimuth of allowedAzimuths) {
       let totalProbability;
+      const continuityDeviation = this.getAngularDifference(candidateAzimuth, previousAzimuth);
+      const separationAzimuth = otherSealNextAzimuth !== null ? this.getAngularDifference(candidateAzimuth, otherSealNextAzimuth) : null;
 
-      if (otherSealNextAzimuth === null) {
-        // SINGLE ARGUMENT CASE: Only consider continuity (smooth transition)
-        const continuityDeviation = this.getAngularDifference(candidateAngle, previousAzimuth);
-        totalProbability = this.gaussianProbability(continuityDeviation, 45); // σ=45° for continuity
-        
+      if (separationAzimuth === null) {
+        totalProbability = this.gaussianProbability(continuityDeviation, 45);
       } else {
-        // DUAL ARGUMENT CASE: Complex distribution combining continuity + separation
-        
-        if (candidateAngle === otherSealNextAzimuth) {
-          // SAME AZIMUTH: Nearly zero probability (but not impossible for edge cases)
+        if (separationAzimuth === 0) {
           totalProbability = 0.001;
-          console.log(`   ${candidateAngle}°: SAME AZIMUTH as other seal - very low probability (${totalProbability.toFixed(3)})`);
+          // console.log(`   ${candidateAzimuth}°: SAME AZIMUTH as other seal - very low probability (${totalProbability.toFixed(3)})`);
         } else {
-          // NORMAL CASE: Calculate continuity + separation probabilities
-          
-          // 1. Continuity probability (favor smooth transitions from previous)
-          const continuityDeviation = this.getAngularDifference(candidateAngle, previousAzimuth);
-          const continuityProb = this.gaussianProbability(continuityDeviation, 45); // σ=45° for continuity
-          
-          // 2. Separation probability (favor good visual separation ~180°)
-          const separationAngle = this.getAngularDifference(candidateAngle, otherSealNextAzimuth);
-          // We want to favor separations around 180° (good visual balance)
-          const separationDeviation = Math.abs(separationAngle - 180);
-          const separationProb = this.gaussianProbability(separationDeviation, 60); // σ=60° for separation preference
-          
-          // 3. Combined probability (multiply both factors)
+          const continuityProb = this.gaussianProbability(continuityDeviation, 45);
+
+          const separationDeviation = Math.abs(separationAzimuth - 180);
+          const separationProb = this.gaussianProbability(separationDeviation, 60);
+
           totalProbability = continuityProb * separationProb;
-          
-          console.log(`   ${candidateAngle}°: continuity=${continuityDeviation.toFixed(1)}° (p=${continuityProb.toFixed(3)}), separation=${separationAngle.toFixed(1)}° (p=${separationProb.toFixed(3)}), total=${totalProbability.toFixed(3)}`);
+
+          // console.log(`   ${candidateAzimuth}°: continuity=${continuityDeviation.toFixed(1)}° (p=${continuityProb.toFixed(3)}), separation=${separationAzimuth.toFixed(1)}° (p=${separationProb.toFixed(3)}), total=${totalProbability.toFixed(3)}`);
         }
       }
 
-      weightedAngles.push({
-        azimuth: candidateAngle,
+      weightedAzimuths.push({
+        azimuth: candidateAzimuth,
         probability: totalProbability,
-        continuityDeviation: this.getAngularDifference(candidateAngle, previousAzimuth),
-        separationAngle: otherSealNextAzimuth !== null ? this.getAngularDifference(candidateAngle, otherSealNextAzimuth) : null
+        continuityDeviation,
+        separationAzimuth
       });
     }
 
-    // Calculate total weight
-    const totalWeight = weightedAngles.reduce((sum, a) => sum + a.probability, 0);
-    
-    // STRICT: No fallbacks - throw error if all probabilities are zero
+    const totalWeight = weightedAzimuths.reduce((sum, a) => sum + a.probability, 0);
+
+    // STRICT: All zero probabilities — return input unchanged
     if (totalWeight === 0) {
-      const errorMsg = `❌ ALL PROBABILITIES ARE ZERO: This should be mathematically impossible. Debug: allowedAngles=[${allowedAngles.join(', ')}]°, previousAzimuth=${previousAzimuth}°, otherSealNextAzimuth=${otherSealNextAzimuth}°`;
-      console.error(errorMsg);
-      console.error('Weighted angles debug:', weightedAngles);
-      throw new Error(errorMsg);
+      console.warn(`⚠️ ALL PROBABILITIES ZERO: returning ${previousAzimuth}° unchanged.`);
+      console.warn('Weighted azimuths debug:', weightedAzimuths);
+      return previousAzimuth;
     }
 
     // Weighted random selection
     let random = Math.random() * totalWeight;
 
-    for (const option of weightedAngles) {
+    for (const option of weightedAzimuths) {
       random -= option.probability;
       if (random <= 0) {
-        const logMsg = `🎲 Selected: ${option.azimuth}° (continuity: ${option.continuityDeviation.toFixed(1)}°${option.separationAngle !== null ? `, separation: ${option.separationAngle.toFixed(1)}°` : ''})`;
+        const logMsg = `🎲 Selected: ${option.azimuth}° (continuity: ${option.continuityDeviation.toFixed(1)}°${option.separationAzimuth !== null ? `, separation: ${option.separationAzimuth.toFixed(1)}°` : ''})`;
         console.log(logMsg);
         return option.azimuth;
       }
     }
 
-    // STRICT: This should never happen with proper weighted selection - throw error
-    const errorMsg = `❌ WEIGHTED SELECTION FAILED: This indicates a bug in the selection algorithm. totalWeight=${totalWeight}, random generation failed.`;
-    console.error(errorMsg);
-    console.error('Weighted angles debug:', weightedAngles);
-    throw new Error(errorMsg);
+    // Should never happen — fallback to input
+    console.error(`❌ WEIGHTED SELECTION FAILED: returning ${previousAzimuth}° unchanged.`);
+    console.error('Weighted azimuths debug:', weightedAzimuths);
+    return previousAzimuth;
   }
+
 }

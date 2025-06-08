@@ -15,9 +15,9 @@ function testQuantizationRanges() {
   const calc4 = new AngleCalculator(4);
   
   // Test that we get reasonable numbers of angles for each quantization
-  const angles6 = calc6.getSetOfAllowedAngles(180);
-  const angles8 = calc8.getSetOfAllowedAngles(180);
-  const angles4 = calc4.getSetOfAllowedAngles(180);
+  const angles6 = calc6.getSetOfAllowedAzimuths(180);
+  const angles8 = calc8.getSetOfAllowedAzimuths(180);
+  const angles4 = calc4.getSetOfAllowedAzimuths(180);
   
   assert.strictEqual(angles6.length > 0, true, 'Q=6 should produce some allowed angles');
   assert.strictEqual(angles8.length > 0, true, 'Q=8 should produce some allowed angles');
@@ -33,7 +33,7 @@ function testForwardDirectionsQ6() {
   const calc = new AngleCalculator(6);
   
   // Test seal entering from 180° (west) - should exit in forward directions (270° < angle < 90°)
-  const leftAngles = calc.getSetOfAllowedAngles(180);
+  const leftAngles = calc.getSetOfAllowedAzimuths(180);
   
   // For Q=6, step=60°, forward directions from 180°:
   // q=2: (180 + 2*60) % 360 = 300° ✓ (in range 270°-360°)
@@ -62,7 +62,7 @@ function testForwardDirectionsQ8() {
   const calc = new AngleCalculator(8);
   
   // Test seal entering from 180° - should exit in forward directions
-  const leftAngles = calc.getSetOfAllowedAngles(180);
+  const leftAngles = calc.getSetOfAllowedAzimuths(180);
   
   // For Q=8, step=45°, forward directions from 180°:
   // q=3: (180 + 3*45) % 360 = 315° ✓ (in range 270°-360°)
@@ -88,8 +88,8 @@ function testOppositeExclusion() {
   const calc = new AngleCalculator(6);
   
   // Test exclusion logic
-  const allAngles = calc.getSetOfAllowedAngles(0); // No exclusion
-  const excludedAngles = calc.getSetOfAllowedAngles(0, 180); // Exclude opposite of 180° (which is 0°)
+  const allAngles = calc.getSetOfAllowedAzimuths(0); // No exclusion
+  const excludedAngles = calc.getSetOfAllowedAzimuths(0, 180); // Exclude opposite of 180° (which is 0°)
   
   // Should have fewer angles when exclusion is applied
   assert.strictEqual(excludedAngles.length <= allAngles.length, true, 
@@ -110,8 +110,8 @@ function testContinuityBehavior() {
   const calc = new AngleCalculator(8);
   
   // Test that seal can continue straight ahead when possible
-  const eastEntry = calc.getSetOfAllowedAngles(90); // Entering from east (90°)
-  const westEntry = calc.getSetOfAllowedAngles(270); // Entering from west (270°)
+  const eastEntry = calc.getSetOfAllowedAzimuths(90); // Entering from east (90°)
+  const westEntry = calc.getSetOfAllowedAzimuths(270); // Entering from west (270°)
   
   // Entering from east (90°), straight ahead would be 270° (west)
   // But 270° is exactly on the boundary - let's check what we get
@@ -135,21 +135,21 @@ function testEdgeCases() {
   
   // Test minimum quantization Q=2
   const calc2 = new AngleCalculator(2);
-  const angles2 = calc2.getSetOfAllowedAngles(180);
+  const angles2 = calc2.getSetOfAllowedAzimuths(180);
   
   // Should get at least one forward angle
   assert.strictEqual(angles2.length > 0, true, 'Q=2 should produce at least one angle');
   
   // Test Q=4 
   const calc4 = new AngleCalculator(4);
-  const angles4 = calc4.getSetOfAllowedAngles(180);
+  const angles4 = calc4.getSetOfAllowedAzimuths(180);
   
   // Should include straight ahead (0°) for west→east
   console.log(`   Q=4 from 180°: [${angles4.sort((a,b) => a-b)}]°`);
   
   // Test high quantization Q=24
   const calc24 = new AngleCalculator(24);
-  const angles24 = calc24.getSetOfAllowedAngles(180);
+  const angles24 = calc24.getSetOfAllowedAzimuths(180);
   assert.strictEqual(angles24.length > 0, true, 'Q=24 should have valid angles');
   
   // All should be forward directions
@@ -167,13 +167,13 @@ function testRepeatedCalls() {
   const calc = new AngleCalculator(6);
   
   // Multiple calls should give same results
-  const angles1 = calc.getSetOfAllowedAngles(180);
-  const angles2 = calc.getSetOfAllowedAngles(180);
+  const angles1 = calc.getSetOfAllowedAzimuths(180);
+  const angles2 = calc.getSetOfAllowedAzimuths(180);
   assert.deepStrictEqual(angles1.sort((a,b) => a-b), angles2.sort((a,b) => a-b), 'Repeated calls should be consistent');
   
   // Changing quantization should affect results
   calc.setQuantization(8);
-  const angles3 = calc.getSetOfAllowedAngles(180);
+  const angles3 = calc.getSetOfAllowedAzimuths(180);
   // May or may not be different, but should still be valid
   assert.strictEqual(angles3.length > 0, true, 'Changed quantization should still work');
   
@@ -188,7 +188,7 @@ function testPerformance() {
   
   const start = Date.now();
   for (let i = 0; i < iterations; i++) {
-    calc.getSetOfAllowedAngles(Math.random() * 360, Math.random() * 360);
+    calc.getSetOfAllowedAzimuths(Math.random() * 360, Math.random() * 360);
   }
   const elapsed = Date.now() - start;
   
