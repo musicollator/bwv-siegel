@@ -1,13 +1,14 @@
 # 🎭 BWV Siegel
 
-**Bach Siegel Animation Web Component with Quantized Light-Refraction Physics**
+**Bach Siegel Animation Web Component with Quantized Movement Patterns**
 
-A modular Web Component that creates beautiful Bach Siegel seal animations following light-refraction physics principles with customizable quantization levels.
+A modular Web Component that creates beautiful Bach Siegel seal animations with customizable quantization levels and mathematical movement patterns.
 
-> **📋 Requirements**: This component requires external files to be available in your project:
+> **📋 Requirements**: This component requires external files available in the `exports/` directory:
 > - `bwv-siegel.html` - Component template
 > - `bwv-siegel.css` - Component styles  
-> - `assets/siegel.svg` - SVG symbols (single source of truth)
+> - `bwv-siegel.svg` - SVG symbols
+> - `AngleCalculator.js` - Movement logic
 >
 > All files are loaded dynamically and follow proper separation of concerns.
 
@@ -23,7 +24,7 @@ A modular Web Component that creates beautiful Bach Siegel seal animations follo
 
 ## 🚀 Quick Start
 
-### CDN Usage (Requires All Files)
+### Basic Usage
 
 ```html
 <!DOCTYPE html>
@@ -32,21 +33,14 @@ A modular Web Component that creates beautiful Bach Siegel seal animations follo
     <title>BWV Siegel Demo</title>
 </head>
 <body>
-    <!-- Just drop it in! -->
+    <!-- Simple usage with auto-start -->
     <bwv-siegel quantization="8" auto-start></bwv-siegel>
     
-    <!-- Load the component -->
-    <script type="module" src="https://unpkg.com/bwv-siegel/bwv-siegel.js"></script>
+    <!-- Load the component from exports directory -->
+    <script type="module" src="exports/bwv-siegel.js"></script>
 </body>
 </html>
 ```
-
-**⚠️ Important**: The component will automatically load:
-- `bwv-siegel.html` (template)
-- `bwv-siegel.css` (styles)  
-- `assets/siegel.svg` (graphics)
-
-Make sure these files are available in your project or specify custom paths using component attributes.
 
 ### NPM Installation
 
@@ -56,17 +50,16 @@ npm install bwv-siegel
 
 **Copy Required Files:**
 ```bash
-# Copy component files to your public directory
-cp node_modules/bwv-siegel/bwv-siegel.* ./public/
-cp -r node_modules/bwv-siegel/assets ./public/
+# Copy all component files to your public directory
+cp -r node_modules/bwv-siegel/exports/* ./public/
 ```
 
 ```javascript
 // Import and use in your application
-import 'bwv-siegel/bwv-siegel.js';
+import './public/bwv-siegel.js';
 
 // Use in your HTML
-// <bwv-siegel quantization="12"></bwv-siegel>
+// <bwv-siegel quantization="12" auto-start></bwv-siegel>
 ```
 
 ### Local Development
@@ -76,7 +69,7 @@ import 'bwv-siegel/bwv-siegel.js';
 git clone https://github.com/yourusername/bwv-siegel.git
 cd bwv-siegel
 python -m http.server 8080
-# Open http://localhost:8080/demo.html
+# Open http://localhost:8080/index.html or http://localhost:8080/demo.html
 ```
 
 ## 📁 Project Structure
@@ -85,27 +78,28 @@ python -m http.server 8080
 bwv-siegel/
 ├── LICENSE                      # MIT License
 ├── README.md                    # Documentation  
-├── assets/
-│   └── siegel.svg              # Original SVG symbols (single source of truth)
-├── src/
-│   └── AngleCalculator.js      # Core angle calculation logic (testable module)
-├── bwv-siegel.js               # Component logic (imports AngleCalculator)
-├── bwv-siegel.html             # Component template (HTML structure)
-├── bwv-siegel.css              # Component styles (CSS styling)
-├── demo.html                   # Comprehensive examples
-├── package.json                # NPM configuration
+├── index.html                   # Simple example page
+├── demo.html                    # Comprehensive examples
+├── package.json                 # NPM configuration
+├── exports/                     # Component files (all in one directory)
+│   ├── AngleCalculator.js       # Movement calculation logic
+│   ├── bwv-siegel.js           # Main component logic
+│   ├── bwv-siegel.html         # Component template
+│   ├── bwv-siegel.css          # Component styles
+│   └── bwv-siegel.svg          # SVG symbols and graphics
 └── test/
-    └── angle-calculator.test.js # Unit tests (tests the ACTUAL AngleCalculator)
+    ├── angle-calculator.test.js # Unit tests
+    └── angle-calculator-enhanced.test.js
 ```
 
 **🎯 Proper Separation of Concerns:**
-- **Core Logic** (`src/AngleCalculator.js`) - Testable physics calculations module
-- **Component** (`bwv-siegel.js`) - Web Component wrapper (imports AngleCalculator)
-- **Template** (`bwv-siegel.html`) - Minimal HTML structure (just the seals)
+- **Core Logic** (`AngleCalculator.js`) - Testable movement calculations
+- **Component** (`bwv-siegel.js`) - Web Component wrapper
+- **Template** (`bwv-siegel.html`) - Minimal HTML structure
 - **Styles** (`bwv-siegel.css`) - CSS styling and animations
-- **Assets** (`assets/siegel.svg`) - Vector graphics and symbols
+- **Assets** (`bwv-siegel.svg`) - Vector graphics and symbols
 
-The core template contains only the essential animation elements - no controls or UI chrome.
+All files are organized in the `exports/` directory for easy deployment.
 
 ## 🎨 Design Philosophy
 
@@ -134,10 +128,10 @@ The BWV Siegel component follows a **clean, focused design**:
 <!-- With configuration -->
 <bwv-siegel 
     quantization="12" 
-    radius="150" 
-    template-path="./templates/siegel.html"
-    styles-path="./styles/siegel.css"
-    svg-path="./assets/siegel.svg">
+    freeze-duration="1000"
+    template-path="custom/template.html"
+    styles-path="custom/styles.css"
+    svg-path="custom/siegel.svg">
 </bwv-siegel>
 
 <!-- Control via JavaScript API -->
@@ -154,14 +148,21 @@ The BWV Siegel component follows a **clean, focused design**:
 const siegel = document.querySelector('bwv-siegel');
 
 // Control methods
-siegel.start();           // Start animation
-siegel.stop();            // Stop animation  
-siegel.reset();           // Reset to initial state
-siegel.setQuantization(16); // Change quantization level
+siegel.start();                 // Start animation
+siegel.stop();                  // Stop animation  
+siegel.reset();                 // Reset to initial state
+siegel.setQuantization(16);     // Change quantization level
+siegel.setFreezeDuration(1200); // Set pause duration at point C
 
 // Get status
 console.log(siegel.status);
-// { isRunning: true, quantization: 8, leftSeal: {...}, rightSeal: {...} }
+// { 
+//   isRunning: true, 
+//   quantization: 8, 
+//   frozenAtC: false,
+//   blueJSB: { currentAzimuth: 90, angularDistance: 1.2 },
+//   goldBJS: { currentAzimuth: 270, angularDistance: 1.2 }
+// }
 ```
 
 ### Event Handling
@@ -169,7 +170,7 @@ console.log(siegel.status);
 ```javascript
 const siegel = document.querySelector('bwv-siegel');
 
-// Listen to events
+// Listen to events (if implemented)
 siegel.addEventListener('siegel-started', (e) => {
     console.log('Animation started with Q=', e.detail.quantization);
 });
@@ -189,28 +190,26 @@ siegel.addEventListener('quantization-changed', (e) => {
 
 ```jsx
 import { useRef, useEffect } from 'react';
-import 'bwv-siegel';
+import './exports/bwv-siegel.js';
 
 function SiegelComponent({ quantization = 8 }) {
     const siegelRef = useRef();
     
     useEffect(() => {
         const siegel = siegelRef.current;
+        if (!siegel) return;
         
-        const handleStart = (e) => {
-            console.log('Started!', e.detail);
-        };
-        
-        siegel.addEventListener('siegel-started', handleStart);
-        return () => siegel.removeEventListener('siegel-started', handleStart);
-    }, []);
+        siegel.setQuantization(quantization);
+    }, [quantization]);
     
     return (
-        <bwv-siegel 
-            ref={siegelRef}
-            quantization={quantization}
-            auto-start
-        />
+        <div style={{ width: '400px', height: '400px' }}>
+            <bwv-siegel 
+                ref={siegelRef}
+                quantization={quantization}
+                auto-start
+            />
+        </div>
     );
 }
 ```
@@ -219,32 +218,32 @@ function SiegelComponent({ quantization = 8 }) {
 
 ```vue
 <template>
-    <bwv-siegel 
-        :quantization="quantization"
-        @siegel-started="onStarted"
-        @quantization-changed="onQuantizationChanged"
-    />
+    <div class="siegel-container">
+        <bwv-siegel 
+            :quantization="quantization"
+            auto-start
+        />
+    </div>
 </template>
 
 <script>
-import 'bwv-siegel';
+import '../exports/bwv-siegel.js';
 
 export default {
     data() {
         return {
             quantization: 8
         };
-    },
-    methods: {
-        onStarted(event) {
-            console.log('Started with Q=', event.detail.quantization);
-        },
-        onQuantizationChanged(event) {
-            this.quantization = event.detail.quantization;
-        }
     }
 };
 </script>
+
+<style>
+.siegel-container {
+    width: 400px;
+    height: 400px;
+}
+</style>
 ```
 
 ### Angular
@@ -252,25 +251,29 @@ export default {
 ```typescript
 // app.component.ts
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import 'bwv-siegel';
+import '../exports/bwv-siegel.js';
 
 @Component({
     selector: 'app-root',
     template: `
-        <bwv-siegel 
-            #siegel
-            [attr.quantization]="quantization"
-            (siegel-started)="onStarted($event)">
-        </bwv-siegel>
-    `
+        <div class="siegel-container">
+            <bwv-siegel 
+                #siegel
+                [attr.quantization]="quantization"
+                auto-start>
+            </bwv-siegel>
+        </div>
+    `,
+    styles: [`
+        .siegel-container {
+            width: 400px;
+            height: 400px;
+        }
+    `]
 })
 export class AppComponent {
     @ViewChild('siegel') siegelElement!: ElementRef;
     quantization = 8;
-    
-    onStarted(event: any) {
-        console.log('Started!', event.detail);
-    }
 }
 ```
 
@@ -281,10 +284,10 @@ export class AppComponent {
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `quantization` | number | `8` | Number of discrete angle steps (2-24) |
-| `radius` | number | `120` | Animation radius in pixels |
+| `freeze-duration` | number | `800` | Pause duration at point C in milliseconds |
 | `template-path` | string | `"bwv-siegel.html"` | Path to the HTML template file |
 | `styles-path` | string | `"bwv-siegel.css"` | Path to the CSS styles file |
-| `svg-path` | string | `"assets/siegel.svg"` | Path to the siegel.svg file |
+| `svg-path` | string | `"bwv-siegel.svg"` | Path to the SVG file |
 | `auto-start` | boolean | `false` | Start animation automatically |
 
 ### Methods
@@ -295,35 +298,28 @@ export class AppComponent {
 | `stop()` | - | Stop the animation |
 | `reset()` | - | Reset to initial state |
 | `setQuantization(q)` | number | Change quantization level |
+| `setFreezeDuration(ms)` | number | Set pause duration in milliseconds |
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `status` | object | Current animation state |
+| `status` | object | Current animation state and seal positions |
 
-### Events
+## 🧮 Movement Patterns
 
-| Event | Detail | Description |
-|-------|--------|-------------|
-| `siegel-started` | `{ quantization }` | Animation started |
-| `siegel-stopped` | - | Animation stopped |
-| `siegel-reset` | - | Animation reset |
-| `quantization-changed` | `{ quantization }` | Quantization level changed |
-
-## 🧮 Physics
-
-The animation follows **light-refraction physics** principles:
+The animation follows mathematical movement rules:
 
 1. **Quantized Angles**: Movement is restricted to discrete angles based on quantization level
-2. **Refraction Rule**: Exit angles must satisfy `90° < angle < 270°` relative to entry
-3. **Anti-collision**: Seals cannot exit in opposite directions (except special cases)
-4. **Opposite Re-entry**: Each seal re-enters from the opposite side of its exit
+2. **Forward Movement**: Seals prefer forward directions within a specific angular range
+3. **Directional Logic**: Each seal selects new directions based on probability distributions
+4. **Synchronized Motion**: Both seals move together along their geodesic paths
 
-**Example with Q=6:**
-- Possible angles: `[0°, 60°, 120°, 180°, 240°, 300°]`
-- Valid exits for seal entering from 180°: `[300°, 0°, 60°]` (refraction rule)
-- If left seal exits at 0°, right seal cannot exit at 180° (anti-collision)
+**Example with Q=8:**
+- Possible angles: `[0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°]`
+- Seals travel along curved paths on a virtual sphere
+- Direction changes occur when seals return to the center point
+- Probability weighting favors smooth transitions and separation
 
 ## 🧪 Testing
 
@@ -337,36 +333,43 @@ node test/angle-calculator.test.js
 
 ## 🎨 Customization
 
-The component uses CSS custom properties for styling:
+The component loads external CSS that can be customized:
 
 ```css
-bwv-siegel {
+/* In your custom bwv-siegel.css */
+:host {
     --siegel-radius: 150px;
-    width: 500px;
-    height: 500px;
+}
+
+.seal {
+    width: 100px;
+    height: 100px;
+}
+
+.siegel-container {
+    background: your-custom-background;
 }
 ```
 
 ## 🌟 Examples
 
-Check out `demo.html` for comprehensive examples including:
-- Clean component usage without built-in controls
-- External API control examples
-- Multiple instances
-- Framework integration
-- Event handling
-- Custom control implementations
+Check out the demo files for comprehensive examples:
 
-The examples show how to build your own controls using the component's API.
+- **`index.html`** - Clean, minimal example with elegant styling
+- **`demo.html`** - Full feature demonstrations including:
+  - External API control examples
+  - Multiple instances with different containers
+  - Framework integration patterns
+  - Custom clipping and styling
 
 ## 📦 Browser Support
 
-- ✅ Chrome 54+
-- ✅ Firefox 63+
-- ✅ Safari 10.1+
-- ✅ Edge 79+
+- ✅ Chrome 54+ (ES6 modules, Web Components)
+- ✅ Firefox 63+ (ES6 modules, Web Components)
+- ✅ Safari 10.1+ (ES6 modules, Web Components)
+- ✅ Edge 79+ (ES6 modules, Web Components)
 
-Requires ES6 modules and Web Components support.
+Requires modern browser with ES6 modules and Web Components support.
 
 ## 🤝 Contributing
 
@@ -383,8 +386,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🎼 About
 
-Inspired by Bach's mathematical precision and the beauty of light refraction in physics. The Siegel seals dance according to quantized physics rules, creating mesmerizing patterns that combine art, mathematics, and science.
+Inspired by Bach's mathematical precision and geometric beauty. The Siegel seals dance according to quantized movement rules, creating mesmerizing patterns that combine art, mathematics, and elegant animation.
 
 ---
 
-**Made with ❤️ and ⚡ by the Christophe Thiebaud and https://claude.ai/*
+**Made with ❤️ and ⚡ by Christophe Thiebaud and Claude.ai**
