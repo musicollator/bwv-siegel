@@ -4,11 +4,15 @@
 
 A modular Web Component that creates beautiful Bach Siegel seal animations with customizable quantization levels and mathematical movement patterns.
 
+![Bach Seals](exports/bwv-siegel.svg)
+
+*The dancing Bach seals: Blue JSB (left) and Gold BJS (right)*
+
 > **📋 Requirements**: This component requires external files available in the `exports/` directory:
-> - `bwv-siegel.html` - Component template
-> - `bwv-siegel.css` - Component styles  
-> - `bwv-siegel.svg` - SVG symbols
-> - `AngleCalculator.js` - Movement logic
+> - `bwv-siegel.html` - Component template with seal positioning
+> - `bwv-siegel.css` - Component styles and animations  
+> - `bwv-siegel.svg` - Bach seal symbols (`bach_siel_full_left-symbol`, `bach_siel_full_right-symbol`)
+> - `AngleCalculator.js` - Movement calculation logic
 >
 > All files are loaded dynamically and follow proper separation of concerns.
 
@@ -97,9 +101,45 @@ bwv-siegel/
 - **Component** (`bwv-siegel.js`) - Web Component wrapper
 - **Template** (`bwv-siegel.html`) - Minimal HTML structure
 - **Styles** (`bwv-siegel.css`) - CSS styling and animations
-- **Assets** (`bwv-siegel.svg`) - Vector graphics and symbols
+- **Assets** (`bwv-siegel.svg`) - Bach seal vector graphics
 
 All files are organized in the `exports/` directory for easy deployment.
+
+## 🎨 Bach Siegel SVG
+
+The `bwv-siegel.svg` file contains the original Bach seal graphics with two symbol definitions:
+
+```xml
+<!-- Blue JSB seal (left) -->
+<symbol id="bach_siel_full_left-symbol">
+  <!-- Intricate Bach seal artwork in blue tones -->
+</symbol>
+
+<!-- Gold BJS seal (right) -->
+<symbol id="bach_siel_full_right-symbol">
+  <!-- Intricate Bach seal artwork in gold tones -->
+</symbol>
+```
+
+**Usage in Component:**
+The HTML template references these symbols:
+```html
+<!-- Blue seal (JSB) -->
+<svg width="120" height="120">
+  <use href="bwv-siegel.svg#bach_siel_full_left-symbol" />
+</svg>
+
+<!-- Gold seal (BJS) -->
+<svg width="120" height="120">
+  <use href="bwv-siegel.svg#bach_siel_full_right-symbol" />
+</svg>
+```
+
+This approach allows for:
+- **Single source of truth** for seal graphics
+- **Efficient loading** - SVG symbols are cached by browser
+- **Easy customization** - Modify colors and details in one file
+- **Scalable graphics** - Crisp at any size
 
 ## 🎨 Design Philosophy
 
@@ -349,6 +389,27 @@ The component loads external CSS that can be customized:
 .siegel-container {
     background: your-custom-background;
 }
+```
+
+**Custom SVG Graphics:**
+To use your own seal designs, modify `bwv-siegel.svg` or create a new file:
+
+```xml
+<!-- Your custom SVG file -->
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="bach_siel_full_left-symbol">
+    <!-- Your custom left seal design -->
+  </symbol>
+  
+  <symbol id="bach_siel_full_right-symbol">
+    <!-- Your custom right seal design -->
+  </symbol>
+</svg>
+```
+
+Then use the `svg-path` attribute:
+```html
+<bwv-siegel svg-path="path/to/your-custom-seals.svg"></bwv-siegel>
 ```
 
 ## 🌟 Examples
