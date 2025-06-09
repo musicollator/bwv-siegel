@@ -111,8 +111,8 @@ class GeodesicPath {
   }
 
   isNearC(tolerance = ANIMATION_SETTINGS.NEAR_C_TOLERANCE) {
-    return this.angularDistance < tolerance || 
-           this.angularDistance > (2 * Math.PI - tolerance);
+    return this.angularDistance < tolerance ||
+      this.angularDistance > (2 * Math.PI - tolerance);
   }
 }
 
@@ -123,7 +123,7 @@ class BwvSiegel extends HTMLElement {
 
     this._initializeAttributes();
     this._initializeState();
-    
+
     this.loadComponentFiles();
   }
 
@@ -172,12 +172,12 @@ class BwvSiegel extends HTMLElement {
     try {
       const baseUrl = this._getBaseUrl();
       const [htmlTemplate, cssStyles] = await this._fetchAssets(baseUrl);
-      
+
       this._renderComponent(htmlTemplate, cssStyles);
       this._initializeThreeJS();
-      
+
       this.isLoaded = true;
-      
+
       // Only auto-start if auto-start attribute is present
       if (this.autoStart) {
         setTimeout(() => this.start(), 100);
@@ -291,7 +291,7 @@ class BwvSiegel extends HTMLElement {
   _processTemplate(template) {
     // Resolve SVG path relative to module location if it's a default path
     const resolvedSvgPath = this._resolveSvgPath();
-    
+
     return template
       .replace(/\{\{SVG_PATH\}\}/g, resolvedSvgPath)
       .replace(/\{\{QUANTIZATION\}\}/g, this.quantization)
@@ -366,40 +366,39 @@ class BwvSiegel extends HTMLElement {
   _setupSeals() {
     this.leftSeal = this.shadowRoot.getElementById('left-seal');
     this.rightSeal = this.shadowRoot.getElementById('right-seal');
-    
+
     console.log('🎭 Seal setup:', {
       leftSeal: !!this.leftSeal,
       rightSeal: !!this.rightSeal,
       leftSealId: this.leftSeal?.id,
       rightSealId: this.rightSeal?.id
     });
-    
+
     if (!this.leftSeal || !this.rightSeal) {
       console.error('🚨 Missing seal elements in DOM!');
-      console.log('📋 Available elements:', 
-        Array.from(this.shadowRoot.querySelectorAll('*')).map(el => ({ 
-          tag: el.tagName, 
-          id: el.id, 
-          classes: el.className 
+      console.log('📋 Available elements:',
+        Array.from(this.shadowRoot.querySelectorAll('*')).map(el => ({
+          tag: el.tagName,
+          id: el.id,
+          classes: el.className
         }))
       );
     }
   }
 
   _setupPaths() {
-    // Start outside the freeze zone to avoid getting stuck
-    const initialDistance = ANIMATION_SETTINGS.POST_CHANGE_DISTANCE;
-    
-    this.bluePath = new GeodesicPath(90, initialDistance);
+    // Start at maximum distance (π) for dramatic effect
+    const initialDistance = 5*Math.PI/4; // Farmost distance from center
+
+    this.bluePath = new GeodesicPath(90, initialDistance); 
     this.bluePath.initialize();
 
-    const goldAzimuth = (90 + 180) % 360;
-    this.goldPath = new GeodesicPath(goldAzimuth, initialDistance);
+    this.goldPath = new GeodesicPath(270, initialDistance);
     this.goldPath.initialize();
-    
+
     // Reset last change tracking to allow immediate direction changes
     this.lastChangeAngularDistance = initialDistance;
-    
+
     console.log('🛤️ Paths initialized:', {
       blueAzimuth: this.bluePath.azimuthFromC,
       blueDistance: this.bluePath.angularDistance,
@@ -422,10 +421,10 @@ class BwvSiegel extends HTMLElement {
     if (distanceFromC < ANIMATION_SETTINGS.DECELERATION_ZONE) {
       const progress = distanceFromC / ANIMATION_SETTINGS.DECELERATION_ZONE;
       const smoothProgress = 1 - Math.pow(1 - progress, 3);
-      return ANIMATION_SETTINGS.MIN_SPEED + 
-             (ANIMATION_SETTINGS.MAX_SPEED - ANIMATION_SETTINGS.MIN_SPEED) * smoothProgress;
+      return ANIMATION_SETTINGS.MIN_SPEED +
+        (ANIMATION_SETTINGS.MAX_SPEED - ANIMATION_SETTINGS.MIN_SPEED) * smoothProgress;
     }
-    
+
     return ANIMATION_SETTINGS.MAX_SPEED;
   }
 
@@ -453,7 +452,7 @@ class BwvSiegel extends HTMLElement {
 
     this.goldPath.azimuthFromC = newGoldAzimuth;
     this.goldPath.angularDistance = ANIMATION_SETTINGS.POST_CHANGE_DISTANCE; // Use larger distance to escape freeze zone
-    
+
     console.log(`🔄 Paths updated: Blue distance=${this.bluePath.angularDistance}, Gold distance=${this.goldPath.angularDistance} (escaping freeze zone)`);
   }
 
@@ -478,7 +477,7 @@ class BwvSiegel extends HTMLElement {
 
   _moveAlongGeodesic() {
     const wasNearC = this.bluePath.isNearC();
-    
+
     if (this._shouldProcessAtPointC()) {
       if (this.frameCount % 60 === 1) {
         console.log('📍 At point C - processing logic');
@@ -489,7 +488,7 @@ class BwvSiegel extends HTMLElement {
 
     this._ensureFreezeDisabled();
     this._advancePaths();
-    
+
     if (this.frameCount % 60 === 1 && !wasNearC) {
       console.log('🚀 Moving along geodesic - advancing paths');
     }
@@ -608,7 +607,7 @@ class BwvSiegel extends HTMLElement {
       console.warn('🚫 Seal element is null');
       return;
     }
-    
+
     sealElement.style.left = screenPos.x + 'px';
     sealElement.style.top = screenPos.y + 'px';
     sealElement.style.display = 'block';
@@ -624,7 +623,7 @@ class BwvSiegel extends HTMLElement {
     // Debug every 60 frames (1 second at 60fps)
     const frameCount = (this.frameCount || 0) + 1;
     this.frameCount = frameCount;
-    
+
     if (frameCount % 60 === 1) {
       console.log(`🎬 Frame ${frameCount}: Blue distance=${this.bluePath.angularDistance.toFixed(4)}, Gold distance=${this.goldPath.angularDistance.toFixed(4)}`);
     }
@@ -678,12 +677,12 @@ class BwvSiegel extends HTMLElement {
 
   stop() {
     this.isRunning = false;
-    
+
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
-    
+
     if (this.leftSeal) this.leftSeal.style.display = 'none';
     if (this.rightSeal) this.rightSeal.style.display = 'none';
   }
@@ -715,8 +714,8 @@ class BwvSiegel extends HTMLElement {
   }
 
   // Public API methods
-  reset() { 
-    this.stop(); 
+  reset() {
+    this.stop();
   }
 
   setQuantization(newQ) {
@@ -751,7 +750,7 @@ class BwvSiegel extends HTMLElement {
   }
 
   get status() {
-    const currentSpeedMultiplier = this.bluePath ? 
+    const currentSpeedMultiplier = this.bluePath ?
       this._getSpeedMultiplier(this.bluePath.angularDistance) : 1.0;
 
     return {
@@ -760,7 +759,7 @@ class BwvSiegel extends HTMLElement {
       autoStart: this.autoStart,
       quantization: this.quantization,
       frozenAtC: this.freezeAtC,
-      freezeProgress: this.freezeAtC ? 
+      freezeProgress: this.freezeAtC ?
         (Date.now() - this.freezeStartTime) / this.freezeDuration : 0,
       currentSpeed: (currentSpeedMultiplier * 100).toFixed(0) + '%',
       speedMultiplier: currentSpeedMultiplier,
