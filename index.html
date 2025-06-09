@@ -14,55 +14,44 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            min-height: 100vh;
             background: #faf8f3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
+            overflow: hidden; /* Prevent scrollbars */
         }
 
-        .container {
-            text-align: center;
-            max-width: 600px;
+        /* Full viewport BWV Siegel component */
+        bwv-siegel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            --seal-size: 30vw;  
+            --sphere-radius: 1.2;  
         }
 
+        /* Top-right aligned text elements */
         .title {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
             font-size: 2.5rem;
             font-weight: 300;
             color: #6b7a8f;
-            margin-bottom: 0.5rem;
             letter-spacing: 2px;
+            z-index: 10;
+            text-align: right;
         }
 
         .subtitle {
+            position: fixed;
+            top: 5rem;
+            right: 2rem;
             font-size: 0.9rem;
             color: #a8b5c4;
-            margin-bottom: 3rem;
             font-weight: 400;
-        }
-
-        .siegel-circle {
-            width: min(70vw, 70vh, 400px);
-            height: min(70vw, 70vh, 400px);
-            margin: 0 auto 2rem;
-            border-radius: 50%;
-            /* background: rgba(255, 255, 255, 0.8); 
-            box-shadow: 
-                0 8px 32px rgba(107, 122, 143, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            */
-            position: relative;
-            overflow: hidden;
-        }
-
-        .siegel-circle bwv-siegel {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: right;
         }
 
         .demo-link {
@@ -77,6 +66,7 @@
             font-size: 0.85rem;
             box-shadow: 0 4px 16px rgba(107, 122, 143, 0.15);
             transition: all 0.2s ease;
+            z-index: 10;
         }
 
         .demo-link:hover {
@@ -88,15 +78,14 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1 class="title">BWV Siegel</h1>
-        <p class="subtitle">Infinite Bach Seal Animation</p>
+    <!-- Full viewport BWV Siegel -->
+    <bwv-siegel quantization="34" auto-start></bwv-siegel>
 
-        <div class="siegel-circle">
-            <bwv-siegel quantization="8" auto-start></bwv-siegel>
-        </div>
-    </div>
+    <!-- Top-right text elements -->
+    <h1 class="title">BWV Siegel</h1>
+    <p class="subtitle">Infinite Bach Seal Animation</p>
 
+    <!-- Demo link -->
     <a href="demo.html" class="demo-link">Full Demo</a>
 
     <script type="module" src="exports/bwv-siegel.js"></script>

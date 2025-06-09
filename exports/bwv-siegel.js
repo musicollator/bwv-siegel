@@ -61,22 +61,33 @@ const CAMERA_SETTINGS = {
   POSITION_Z: 2
 };
 
+// Temporarily change SPHERE_MATERIAL for better visibility:
+
 const SPHERE_MATERIAL = {
   color: 0xffffff,
-  opacity: 0.2,
+  opacity: 0,       
   wireframe: true,
   transparent: true
 };
 
+// Or for even more dramatic visibility:
+const SPHERE_MATERIAL_DEBUG = {
+  color: 0xff0000,     // Red
+  opacity: 1.0,        // Fully opaque
+  wireframe: false,    // Solid instead of wireframe
+  transparent: false
+};
+
 class GeodesicPath {
-  constructor(azimuthFromC, angularDistance = 0) {
+  constructor(azimuthFromC, angularDistance = 0, sphereRadius = 1.0) {
     this.azimuthFromC = azimuthFromC;
     this.angularDistance = angularDistance;
+    this.sphereRadius = sphereRadius;  // ← Add this
     this.pointC = null;
   }
 
   initialize() {
-    this.pointC = new Vector3(0, 0, 1);
+    this.pointC = new Vector3(0, 0, this.sphereRadius);
   }
 
   getPosition() {
@@ -84,9 +95,9 @@ class GeodesicPath {
     const directionX = Math.sin(azimuthRad);
     const directionY = -Math.cos(azimuthRad);
 
-    const x = Math.sin(this.angularDistance) * directionX;
-    const y = Math.sin(this.angularDistance) * directionY;
-    const z = Math.cos(this.angularDistance);
+    const x = Math.sin(this.angularDistance) * directionX * this.sphereRadius;  // ← Multiply by radius
+    const y = Math.sin(this.angularDistance) * directionY * this.sphereRadius;  // ← Multiply by radius
+    const z = Math.cos(this.angularDistance) * this.sphereRadius;               // ← Multiply by radius
 
     return new Vector3(x, y, z);
   }
@@ -321,9 +332,25 @@ class BwvSiegel extends HTMLElement {
     `;
   }
 
+  _readSphereRadiusFromCSS() {
+    const computedStyle = getComputedStyle(this);
+    const cssRadius = computedStyle.getPropertyValue('--sphere-radius').trim();
+
+    if (cssRadius && !isNaN(parseFloat(cssRadius))) {
+      this.sphereRadius = parseFloat(cssRadius);
+      console.log('✅ Using CSS sphere radius:', this.sphereRadius);
+    } else {
+      this.sphereRadius = ANIMATION_SETTINGS.SPHERE_RADIUS; // fallback to 1.0
+      console.log('⚠️ Using default sphere radius:', this.sphereRadius);
+    }
+  }
+
   _initializeThreeJS() {
     const container = this.shadowRoot.querySelector('.siegel-wrapper');
     const canvas = this.shadowRoot.getElementById('three-canvas');
+
+    // READ SPHERE RADIUS FIRST ← Add this
+    this._readSphereRadiusFromCSS();
 
     this._setupScene();
     this._setupCamera(container);
@@ -335,7 +362,7 @@ class BwvSiegel extends HTMLElement {
   }
 
   _setupScene() {
-    this.pointC = new Vector3(0, 0, 1);
+    this.pointC = new Vector3(0, 0, this.sphereRadius);
     this.scene = new Scene();
   }
 
@@ -356,11 +383,15 @@ class BwvSiegel extends HTMLElement {
     this.renderer.setClearColor(0x000000, 0);
   }
 
+  // Enhanced _setupSphere with better debugging:
   _setupSphere() {
+    // Sphere radius already set by _readSphereRadiusFromCSS()
     const geometry = new SphereGeometry(this.sphereRadius, 32, 32);
     const material = new MeshBasicMaterial(SPHERE_MATERIAL);
     this.sphere = new Mesh(geometry, material);
     this.scene.add(this.sphere);
+
+    console.log(`🌍 Sphere created with radius: ${this.sphereRadius}`);
   }
 
   _setupSeals() {
@@ -388,12 +419,12 @@ class BwvSiegel extends HTMLElement {
 
   _setupPaths() {
     // Start at maximum distance (π) for dramatic effect
-    const initialDistance = 5*Math.PI/4; // Farmost distance from center
+    const initialDistance = 5 * Math.PI / 4; // Farmost distance from center
 
-    this.bluePath = new GeodesicPath(90, initialDistance); 
+    this.bluePath = new GeodesicPath(90, initialDistance, this.sphereRadius);   // ← Pass radius
     this.bluePath.initialize();
 
-    this.goldPath = new GeodesicPath(270, initialDistance);
+    this.goldPath = new GeodesicPath(270, initialDistance, this.sphereRadius);  // ← Pass radius
     this.goldPath.initialize();
 
     // Reset last change tracking to allow immediate direction changes
@@ -404,6 +435,7 @@ class BwvSiegel extends HTMLElement {
       blueDistance: this.bluePath.angularDistance,
       goldAzimuth: this.goldPath.azimuthFromC,
       goldDistance: this.goldPath.angularDistance,
+      sphereRadius: this.sphereRadius,  // ← Log the radius being used
       lastChangeDistance: this.lastChangeAngularDistance,
       nearCTolerance: ANIMATION_SETTINGS.NEAR_C_TOLERANCE,
       safelyOutsideFreezeZone: this.bluePath.angularDistance > ANIMATION_SETTINGS.NEAR_C_TOLERANCE
@@ -448,10 +480,12 @@ class BwvSiegel extends HTMLElement {
 
   _updatePaths(newBlueAzimuth, newGoldAzimuth) {
     this.bluePath.azimuthFromC = newBlueAzimuth;
-    this.bluePath.angularDistance = ANIMATION_SETTINGS.POST_CHANGE_DISTANCE; // Use larger distance to escape freeze zone
+    this.bluePath.angularDistance = ANIMATION_SETTINGS.POST_CHANGE_DISTANCE;
+    this.bluePath.sphereRadius = this.sphereRadius;  // ← Ensure radius is maintained
 
     this.goldPath.azimuthFromC = newGoldAzimuth;
-    this.goldPath.angularDistance = ANIMATION_SETTINGS.POST_CHANGE_DISTANCE; // Use larger distance to escape freeze zone
+    this.goldPath.angularDistance = ANIMATION_SETTINGS.POST_CHANGE_DISTANCE;
+    this.goldPath.sphereRadius = this.sphereRadius;  // ← Ensure radius is maintained
 
     console.log(`🔄 Paths updated: Blue distance=${this.bluePath.angularDistance}, Gold distance=${this.goldPath.angularDistance} (escaping freeze zone)`);
   }
@@ -586,7 +620,10 @@ class BwvSiegel extends HTMLElement {
 
   _updateSealsAtPointC() {
     const screenPos = this._projectToScreen(this.pointC);
-    const scale = Math.max(0.1, (this.pointC.z + 1) / 2);
+
+    // Use normalized scaling for point C too
+    const normalizedZ = this.pointC.z / this.sphereRadius; // Should be 1.0
+    const scale = Math.max(0.1, (normalizedZ + 1) / 2);   // Should be 1.0
     const transform = `translate(-50%, -50%) scale(${scale})`;
 
     this._positionSeal(this.leftSeal, screenPos, transform);
@@ -596,7 +633,10 @@ class BwvSiegel extends HTMLElement {
   _updateSealPosition(path, sealElement, sealName) {
     const position = path.getPosition();
     const screenPos = this._projectToScreen(position);
-    const scale = Math.max(0.1, (position.z + 1) / 2);
+
+    // Scale based on normalized distance from camera (accounting for sphere radius)
+    const normalizedZ = position.z / this.sphereRadius; // Normalize by sphere radius
+    const scale = Math.max(0.1, (normalizedZ + 1) / 2);
     const transform = `translate(-50%, -50%) scale(${scale})`;
 
     this._positionSeal(sealElement, screenPos, transform);

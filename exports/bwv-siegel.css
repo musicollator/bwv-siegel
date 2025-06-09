@@ -1,14 +1,13 @@
-/* BWV Siegel Web Component Styles */
+/* bwv-siegel.css - Clean approach with fallback */
 
 :host {
   display: block;
   width: 100%;
   height: 400px;
   position: relative;
-  --siegel-radius: {{RADIUS}}px;
+   --sphere-radius: 1.0;
 }
 
-/* Three.js Container */
 .siegel-wrapper {
   position: relative;
   width: 100%;
@@ -17,7 +16,6 @@
   background: transparent;
 }
 
-/* Three.js Canvas */
 #three-canvas {
   position: absolute;
   top: 0;
@@ -26,11 +24,11 @@
   height: 100%;
 }
 
-/* Seals */
+/* Seals with sensible fallback */
 .seal {
   position: absolute;
-  width: 120px;
-  height: 120px;
+  width: var(--seal-size, 120px);   /* Use custom size, fallback to 120px */
+  height: var(--seal-size, 120px);
   display: none;
   transform: translate(-50%, -50%);
   transition: none;
@@ -47,11 +45,10 @@
   height: 100%;
 }
 
-/* Specific z-index for each seal */
 #left-seal {
-  z-index: 20;  /* Higher - appears on top */
+  z-index: 20;
 }
 
 #right-seal {
-  z-index: 10;  /* Lower - appears behind left seal */
+  z-index: 10;
 }

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User-Controlled Seal Sizing</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .example {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .container {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        /* Example 1: Fixed size override */
+        .small-seals {
+            --seal-size: 60px;
+            width: 400px;
+            height: 300px;
+        }
+
+        /* Example 2: Percentage-based sizing */
+        .percentage-seals {
+            width: 500px;
+            height: 400px;
+        }
+        .percentage-seals .seal {
+            width: 8vmin;  /* 8% of viewport minimum dimension */
+            height: 8vmin;
+        }
+
+        /* Example 3: Container-relative sizing */
+        .container-relative {
+            width: 600px;
+            height: 350px;
+        }
+        .container-relative .seal {
+            width: clamp(40px, 10cqw, 150px);  /* Container query width */
+            height: clamp(40px, 10cqw, 150px);
+        }
+
+        /* Example 4: Responsive with media queries */
+        .responsive-seals {
+            width: 70vw;
+            height: 50vh;
+            min-width: 300px;
+            min-height: 250px;
+        }
+        
+        @media (max-width: 768px) {
+            .responsive-seals {
+                --seal-size: 50px;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .responsive-seals {
+                --seal-size: 80px;
+            }
+        }
+        
+        @media (min-width: 1201px) {
+            .responsive-seals {
+                --seal-size: 120px;
+            }
+        }
+
+        /* Example 5: Different sizes for each seal */
+        .asymmetric-seals #left-seal {
+            width: 100px;
+            height: 100px;
+        }
+        .asymmetric-seals #right-seal {
+            width: 80px;
+            height: 80px;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .code {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        .info {
+            background: #e8f4f8;
+            padding: 10px;
+            border-left: 4px solid #17a2b8;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>User-Controlled BWV Siegel Sizing Examples</h1>
+    
+    <div class="example">
+        <h2>1. Fixed Size Override</h2>
+        <div class="code">
+.small-seals {
+    --seal-size: 60px;
+}
+        </div>
+        <div class="container small-seals">
+            <bwv-siegel quantization="8" auto-start></bwv-siegel>
+        </div>
+    </div>
+    
+    <div class="example">
+        <h2>2. Viewport-Relative Sizing</h2>
+        <div class="code">
+.percentage-seals .seal {
+    width: 8vmin;  /* 8% of viewport minimum dimension */
+    height: 8vmin;
+}
+        </div>
+        <div class="info">Seals scale with viewport size - try resizing your window!</div>
+        <div class="container percentage-seals">
+            <bwv-siegel quantization="12" auto-start></bwv-siegel>
+        </div>
+    </div>
+    
+    <div class="example">
+        <h2>3. Container Query Sizing (Modern Browsers)</h2>
+        <div class="code">
+.container-relative .seal {
+    width: clamp(40px, 10cqw, 150px);
+    height: clamp(40px, 10cqw, 150px);
+}
+        </div>
+        <div class="container container-relative">
+            <bwv-siegel quantization="16" auto-start></bwv-siegel>
+        </div>
+    </div>
+    
+    <div class="example">
+        <h2>4. Responsive Media Queries</h2>
+        <div class="code">
+@media (max-width: 768px) {
+    .responsive-seals { --seal-size: 50px; }
+}
+@media (min-width: 769px) and (max-width: 1200px) {
+    .responsive-seals { --seal-size: 80px; }
+}
+@media (min-width: 1201px) {
+    .responsive-seals { --seal-size: 120px; }
+}
+        </div>
+        <div class="container responsive-seals">
+            <bwv-siegel quantization="8" auto-start></bwv-siegel>
+        </div>
+    </div>
+    
+    <div class="example">
+        <h2>5. Asymmetric Seal Sizes</h2>
+        <div class="code">
+.asymmetric-seals #left-seal {
+    width: 100px; height: 100px;
+}
+.asymmetric-seals #right-seal {
+    width: 80px; height: 80px;
+}
+        </div>
+        <div class="container asymmetric-seals" style="width: 500px; height: 350px;">
+            <bwv-siegel quantization="8" auto-start></bwv-siegel>
+        </div>
+    </div>
+
+    <div class="info">
+        <strong>Benefits of this approach:</strong>
+        <ul>
+            <li>✅ Simple component code - no JavaScript sizing calculations</li>
+            <li>✅ Full user control - any CSS sizing strategy works</li>
+            <li>✅ Standards compliant - styling belongs in CSS</li>
+            <li>✅ Performance friendly - no resize listeners for styling</li>
+            <li>✅ Flexible - fixed, relative, responsive, asymmetric all possible</li>
+        </ul>
+    </div>
+
+    <script type="module" src="exports/bwv-siegel.js"></script>
+</body>
+</html>
