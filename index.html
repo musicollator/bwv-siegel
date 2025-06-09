@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,10 +47,11 @@
             height: min(70vw, 70vh, 400px);
             margin: 0 auto 2rem;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.8);
+            /* background: rgba(255, 255, 255, 0.8); 
             box-shadow: 
                 0 8px 32px rgba(107, 122, 143, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            */
             position: relative;
             overflow: hidden;
         }
@@ -61,15 +63,6 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-        }
-
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #a8b5c4;
-            font-size: 0.9rem;
         }
 
         .demo-link {
@@ -93,13 +86,13 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1 class="title">BWV Siegel</h1>
         <p class="subtitle">Infinite Bach Seal Animation</p>
-        
+
         <div class="siegel-circle">
-            <div class="loading">Loading...</div>
             <bwv-siegel quantization="8" auto-start></bwv-siegel>
         </div>
     </div>
@@ -110,12 +103,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const siegel = document.querySelector('bwv-siegel');
-            const loading = document.querySelector('.loading');
-            
-            setTimeout(() => {
-                if (loading) loading.style.display = 'none';
-            }, 2000);
-            
+
             setInterval(() => {
                 if (siegel?.status && !siegel.status.isRunning) {
                     siegel.start();
@@ -124,4 +112,5 @@
         });
     </script>
 </body>
+
 </html>

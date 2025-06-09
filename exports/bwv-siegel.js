@@ -170,8 +170,6 @@ class BwvSiegel extends HTMLElement {
 
   async loadComponentFiles() {
     try {
-      this._showLoadingMessage();
-      
       const baseUrl = this._getBaseUrl();
       const [htmlTemplate, cssStyles] = await this._fetchAssets(baseUrl);
       
@@ -192,14 +190,6 @@ class BwvSiegel extends HTMLElement {
       console.error('Critical error during component initialization:', error);
       this._showErrorMessage(error);
     }
-  }
-
-  _showLoadingMessage() {
-    this.shadowRoot.innerHTML = `
-      <div style="padding: 20px; text-align: center;">
-        🎼 Loading Dual Seal BWV Siegel...
-      </div>
-    `;
   }
 
   _getBaseUrl() {
@@ -248,8 +238,8 @@ class BwvSiegel extends HTMLElement {
         position: relative;
         width: 100%;
         height: 400px;
-        background: linear-gradient(135deg, #1a1a2e, #16213e);
-        border-radius: 10px;
+        /* background: linear-gradient(135deg, #1a1a2e, #16213e); 
+        border-radius: 10px; */
         overflow: hidden;
       }
       #three-canvas {
@@ -324,7 +314,7 @@ class BwvSiegel extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>${processedCss}</style>
-      <div class="siegel-container">
+      <div class="siegel-wrapper">
         <canvas id="three-canvas"></canvas>
         ${processedHtml}
       </div>
@@ -332,7 +322,7 @@ class BwvSiegel extends HTMLElement {
   }
 
   _initializeThreeJS() {
-    const container = this.shadowRoot.querySelector('.siegel-container');
+    const container = this.shadowRoot.querySelector('.siegel-wrapper');
     const canvas = this.shadowRoot.getElementById('three-canvas');
 
     this._setupScene();
@@ -701,7 +691,7 @@ class BwvSiegel extends HTMLElement {
   handleResize() {
     if (!this.renderer || !this.camera || !this.isLoaded) return;
 
-    const container = this.shadowRoot.querySelector('.siegel-container');
+    const container = this.shadowRoot.querySelector('.siegel-wrapper');
     if (!container) return;
 
     const width = container.clientWidth;
