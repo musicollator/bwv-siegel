@@ -1,4 +1,4 @@
-# 🎭 BWV Siegel
+# 🌀 BWV Siegel
 
 **Bach Siegel Animation Web Component with Quantized Movement Patterns**
 
